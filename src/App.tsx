@@ -21,8 +21,14 @@ function ScrollToTop() {
   const location = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname]);
+    const scrollTop = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    };
+
+    scrollTop();
+    requestAnimationFrame(scrollTop);
+  }, [location.pathname, location.searchStr]);
 
   return null;
 }
