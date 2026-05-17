@@ -1,15 +1,20 @@
+import { useEffect } from 'react';
 import { Page, PageBody, PageHeader, PageTitle, Button } from '@blinkdotnew/ui';
 import { Link } from '@tanstack/react-router';
 import { BookOpen, BarChart2, Zap, ChevronRight, Shield } from 'lucide-react';
 import { Card } from '@blinkdotnew/ui';
 
 export function HomePage() {
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
   return (
     <Page>
       <PageHeader className="hidden">
         <PageTitle>Bienvenue sur Résous Pas à Pas</PageTitle>
       </PageHeader>
-      <PageBody className="flex flex-col items-center justify-center min-h-[80vh] py-12 px-6">
+      <PageBody className="flex flex-col items-center justify-start min-h-[80vh] py-12 px-6">
         <div className="max-w-4xl w-full space-y-12 text-center">
           <div className="space-y-6 animate-fade-in">
             <div className="mx-auto h-24 w-24 rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shadow-2xl shadow-primary/20 transform rotate-3 hover:rotate-0 transition-transform cursor-pointer">
@@ -23,7 +28,7 @@ export function HomePage() {
                 Une application pour apprendre à comprendre, planifier et résoudre les problèmes mathématiques comme en classe.
               </p>
             </div>
-            <div className="inline-block p-4 bg-secondary/80 rounded-2xl border-2 border-primary/10 text-primary-foreground bg-primary font-bold shadow-lg animate-bounce mt-4">
+            <div className="inline-block p-4 bg-emerald-100 rounded-2xl border-2 border-emerald-300 text-emerald-950 font-bold shadow-md mt-4">
               Ici, tu avances une étape à la fois. C’est rassurant !
             </div>
           </div>
