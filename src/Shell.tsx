@@ -36,7 +36,7 @@ export function Shell({ sidebar, appName = 'App', children }: ShellProps) {
       </AppShellSidebar>
 
       {/* Main content */}
-      <AppShellMain>
+      <AppShellMain className="app-main-scroll">
         {/* Mobile header — hamburger + app name, only shown below md breakpoint */}
         <div className="md:hidden flex items-center gap-3 px-4 h-14 border-b border-border bg-background sticky top-0 z-30">
           <MobileSidebarTrigger />
