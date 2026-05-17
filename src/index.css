@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Blink UI Theme CSS
+   REQUIRED for @blinkdotnew/ui components to render correctly.
+   BlinkUIProvider adds .theme-{name} + .dark/.light to <html>,
+   activating the matching CSS variable set below.
+   ───────────────────────────────────────────────────────────────────────────── */
+@import '@blinkdotnew/ui/styles';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /* Full viewport chain so AppShell / Sidebar h-full + flex-1 SidebarContent work */
+  html {
+    height: 100%;
+  }
+
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body {
+    min-height: 100%;
+    min-height: 100dvh;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    letter-spacing: var(--tracking-normal);
+  }
+}
+
+/* ── App palette (unlayered, after utilities) ─────────────────────────────────
+   Overrides @blinkdotnew/ui theme colors. @layer base loses specificity to UI themes.
+   Dark mode uses :root.dark + .theme-*.dark to match BlinkUIProvider.
+   ⚠️ AGENT MUST REPLACE placeholder values with a custom palette.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Québec School Notebook Palette */
+  --background: 54 94% 97%; /* Very soft crème */
+  --foreground: 215 25% 20%; /* Dark blue-grey for text */
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 20%;
+  
+  --primary: 221 83% 53%; /* Classic school blue */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 142 71% 95%; /* Very light green */
+  --secondary-foreground: 142 71% 25%;
+  
+  --muted: 54 20% 90%;
+  --muted-foreground: 215 15% 45%;
+  
+  --accent: 142 71% 45%; /* Encouraging green */
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --border: 215 15% 85%;
+  --input: 215 15% 85%;
+  --ring: 221 83% 53%;
+
+  /* Charts */
+  --chart-1: 221 83% 53%;
+  --chart-2: 142 71% 45%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 330 81% 50%;
+  --chart-5: 262 52% 47%;
+
+  /* Sidebar */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 215 25% 20%;
+  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 142 71% 95%;
+  --sidebar-accent-foreground: 142 71% 25%;
+  --sidebar-border: 215 15% 90%;
+  --sidebar-ring: 221 83% 53%;
+
+  /* Fonts */
+  --font-sans: 'Geist Sans', 'Inter', sans-serif;
+  --font-heading: 'Geist Sans', 'Inter', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  /* Spacing & Radius */
+  --radius: 0.75rem; /* Rounder for child-friendly feel */
+}
+
+:root.dark,
+.theme-linear.dark,
+.theme-glass.dark,
+.theme-midnight.dark,
+.theme-minimal.dark {
+  --background: 222 47% 11%;
+  --foreground: 215 20% 95%;
+  --card: 222 47% 15%;
+  --card-foreground: 215 20% 95%;
+  --popover: 222 47% 15%;
+  --popover-foreground: 215 20% 95%;
+  
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  
+  --secondary: 217 32% 20%;
+  --secondary-foreground: 215 20% 95%;
+  
+  --muted: 217 32% 20%;
+  --muted-foreground: 215 15% 65%;
+  
+  --accent: 142 71% 55%;
+  --accent-foreground: 222 47% 11%;
+  
+  --border: 217 32% 25%;
+  --input: 217 32% 25%;
+  --ring: 217 91% 60%;
+
+  --sidebar: 222 47% 12%;
+  --sidebar-foreground: 215 20% 95%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 222 47% 11%;
+  --sidebar-accent: 217 32% 25%;
+  --sidebar-accent-foreground: 215 20% 95%;
+  --sidebar-border: 217 32% 25%;
+  --sidebar-ring: 217 91% 60%;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
