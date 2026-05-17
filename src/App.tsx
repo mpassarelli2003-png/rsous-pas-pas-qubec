@@ -1,4 +1,5 @@
-import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet } from '@tanstack/react-router';
+import { useEffect } from 'react';
+import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet, useLocation } from '@tanstack/react-router';
 import { Toaster } from '@blinkdotnew/ui';
 import { SharedAppLayout } from './layouts/shared-app-layout';
 
@@ -16,9 +17,20 @@ const selectSearchSchema = z.object({
   examMode: z.boolean().optional(),
 });
 
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
+
+  return null;
+}
+
 const rootRoute = createRootRoute({
   component: () => (
     <SharedAppLayout appName="Résous Pas à Pas">
+      <ScrollToTop />
       <Outlet />
       <Toaster position="top-right" />
     </SharedAppLayout>
