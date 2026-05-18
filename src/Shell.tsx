@@ -15,7 +15,7 @@ import {
   AppShellSidebar,
   AppShellMain,
   MobileSidebarTrigger,
-} from '@blinkdotnew/ui'
+} from '@/lib/ui'
 
 interface ShellProps {
   /** Sidebar content — e.g. <Sidebar><SidebarItem .../></Sidebar> */

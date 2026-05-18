@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Page, PageBody, PageHeader, PageTitle, Card, Button, Badge, Progress } from '@blinkdotnew/ui';
+import { Page, PageBody, PageHeader, PageTitle, Card, Button, Badge, Progress } from '@/lib/ui';
 import { CheckCircle2, XCircle, Target, TrendingUp, Lightbulb, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { loadProgress, saveProgress, type CompletedProblem } from '../lib/progressStore';

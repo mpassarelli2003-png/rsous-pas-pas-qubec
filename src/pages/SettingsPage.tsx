@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Page, PageBody, PageHeader, PageTitle, Card, Button, Switch, Slider } from '@blinkdotnew/ui';
+import { Page, PageBody, PageHeader, PageTitle, Card, Button, Switch, Slider } from '@/lib/ui';
 import { Type, Eye, Volume2, ShieldCheck, Save, RotateCcw } from 'lucide-react';
-import { toast } from '@blinkdotnew/ui';
+import { toast } from '@/lib/ui';
 
 export function SettingsPage() {
   const [settings, setSettings] = useState({

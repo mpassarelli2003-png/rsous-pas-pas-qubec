@@ -5,7 +5,7 @@ import {
   Input, Textarea,
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
   toast
-} from '@blinkdotnew/ui';
+} from '@/lib/ui';
 import { useNavigate } from '@tanstack/react-router';
 import {
   Shield, LogOut, Plus, Search,

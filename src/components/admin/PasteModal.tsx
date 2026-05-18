@@ -4,7 +4,7 @@
  * automatiquement les champs du formulaire.
  */
 import { useState } from 'react';
-import { Button, Textarea } from '@blinkdotnew/ui';
+import { Button, Textarea } from '@/lib/ui';
 import { ClipboardPaste, CheckCircle2, AlertCircle, X, Loader2 } from 'lucide-react';
 import { parseProblemText, type ParseResult } from '../../lib/parseProblem';
 
