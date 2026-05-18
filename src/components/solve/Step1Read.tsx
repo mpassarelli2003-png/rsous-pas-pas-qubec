@@ -19,31 +19,40 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
-
       {/* ── Bande gauche : Aide-mémoire de lecture ── */}
-      <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-24 lg:self-start rounded-2xl border-2 border-blue-200 bg-blue-50 p-4 space-y-3">
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-700 flex items-center gap-1.5">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-24 lg:self-start rounded-2xl border-2 border-blue-300 bg-blue-50 p-5 shadow-sm">
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-4">
+          <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
           Aide-mémoire de lecture
         </p>
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-blue-800">Comment bien lire un problème :</p>
-          <ul className="space-y-1.5 text-xs text-blue-800">
-            <li className="flex items-start gap-1.5">
-              <span className="mt-0.5 shrink-0 text-blue-500">①</span>
-              Lis l'énoncé dans la <strong>zone bleue en haut</strong> de la page.
+
+        <div className="space-y-3">
+          <p className="text-sm font-bold text-blue-950">Comment bien lire un problème :</p>
+
+          <ol className="space-y-3 text-sm text-blue-950">
+            <li className="grid grid-cols-[2rem_1fr] gap-2 items-start">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-sm">1</span>
+              <p className="leading-relaxed">
+                Lis la <strong className="font-extrabold text-blue-900">zone bleue en haut</strong> de la page.
+              </p>
             </li>
-            <li className="flex items-start gap-1.5">
-              <span className="mt-0.5 shrink-0 text-blue-500">②</span>
-              Cherche les nombres et les mots importants.
+
+            <li className="grid grid-cols-[2rem_1fr] gap-2 items-start">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-sm">2</span>
+              <p className="leading-relaxed">
+                Cherche les nombres et les mots importants.
+              </p>
             </li>
-            <li className="flex items-start gap-1.5">
-              <span className="mt-0.5 shrink-0 text-blue-500">③</span>
-              Relis en te concentrant sur la question à la fin.
+
+            <li className="grid grid-cols-[2rem_1fr] gap-2 items-start">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-sm">3</span>
+              <p className="leading-relaxed">
+                Relis la question à la fin.
+              </p>
             </li>
-          </ul>
+          </ol>
         </div>
       </aside>
 
