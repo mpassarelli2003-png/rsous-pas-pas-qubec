@@ -40,29 +40,25 @@ export function HintPanel({ currentStep, hintLevel, onNextLevel, onClose, hints 
   const problemHints = hints ?? DEFAULT_HINTS;
   const hintTexts = [problemHints.level1, problemHints.level2, problemHints.level3];
 
-  // hintLevel is 1-based; clamp to valid index
   const index = Math.min(Math.max(hintLevel, 1), 3) - 1;
   const hint = hintTexts[index];
   const isLast = hintLevel >= 3;
-
   const stepContext = STEP_CONTEXT[currentStep];
 
   return (
-    <div className="animate-fade-in rounded-2xl border-2 border-yellow-200 bg-yellow-50 shadow-md overflow-hidden">
-      {/* En-tête */}
-      <div className="flex items-center justify-between px-4 py-3 bg-yellow-100 border-b border-yellow-200">
+    <div className="animate-fade-in rounded-2xl border-2 border-violet-200 bg-violet-50 shadow-md overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-violet-100 border-b border-violet-200">
         <div className="flex items-center gap-2">
           <span className="text-xl">💡</span>
-          <span className="font-bold text-yellow-800 text-sm uppercase tracking-wide">
+          <span className="font-bold text-violet-800 text-sm uppercase tracking-wide">
             Indice {hintLevel}/3
           </span>
-          {/* Indicateur de progression */}
           <div className="flex gap-1 ml-1">
             {[1, 2, 3].map((lvl) => (
               <div
                 key={lvl}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  lvl <= hintLevel ? 'bg-yellow-500' : 'bg-yellow-200'
+                  lvl <= hintLevel ? 'bg-violet-500' : 'bg-violet-200'
                 }`}
               />
             ))}
@@ -70,40 +66,37 @@ export function HintPanel({ currentStep, hintLevel, onNextLevel, onClose, hints 
         </div>
         <button
           onClick={onClose}
-          className="text-yellow-600 hover:text-yellow-800 transition-colors p-1 rounded-lg hover:bg-yellow-200"
+          className="text-violet-600 hover:text-violet-800 transition-colors p-1 rounded-lg hover:bg-violet-200"
           aria-label="Fermer l'indice"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Rappel contextuel de l'étape */}
       {stepContext && (
         <div className="px-5 pt-4 pb-0">
-          <p className="text-yellow-700 text-sm font-semibold italic">{stepContext}</p>
+          <p className="text-violet-700 text-sm font-semibold italic">{stepContext}</p>
         </div>
       )}
 
-      {/* Contenu de l'indice */}
       <div className="px-5 py-4">
-        <p className="text-yellow-900 text-base md:text-lg font-medium leading-relaxed">
+        <p className="text-violet-950 text-base md:text-lg font-medium leading-relaxed">
           {hint}
         </p>
       </div>
 
-      {/* Actions */}
       <div className="flex items-center justify-between px-5 pb-4 gap-3">
         {!isLast ? (
           <Button
             variant="outline"
             size="sm"
             onClick={onNextLevel}
-            className="gap-2 border-yellow-300 text-yellow-800 hover:bg-yellow-100 hover:border-yellow-400"
+            className="gap-2 border-violet-300 text-violet-800 hover:bg-violet-100 hover:border-violet-400"
           >
             Indice suivant <ChevronRight className="h-4 w-4" />
           </Button>
         ) : (
-          <span className="text-xs text-yellow-600 italic font-semibold">
+          <span className="text-xs text-violet-600 italic font-semibold">
             Tu as vu tous les indices.
           </span>
         )}
@@ -111,7 +104,7 @@ export function HintPanel({ currentStep, hintLevel, onNextLevel, onClose, hints 
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100"
+          className="text-violet-700 hover:text-violet-900 hover:bg-violet-100"
         >
           Fermer
         </Button>
