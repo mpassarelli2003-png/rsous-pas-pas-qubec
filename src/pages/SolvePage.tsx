@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, CheckCircle2, Home, Lightbulb } from 'lucide-react';
 import problemsData from '../data/problems.json';
 import pfeq5Batch2 from '../data/pfeq5-batch2.json';
+import pfeq5Batch3 from '../data/pfeq5-batch3.json';
 import { addCompletedProblem } from '../lib/progressStore';
 import { loadCustomProblems } from '../lib/adminStore';
 
@@ -42,7 +43,7 @@ export function SolvePage() {
     const custom = loadCustomProblems()
       .filter(p => p.status === 'publie')
       .map(p => ({ ...p }));
-    return [...(problemsData as any[]), ...(pfeq5Batch2 as any[]), ...custom];
+    return [...(problemsData as any[]), ...(pfeq5Batch2 as any[]), ...(pfeq5Batch3 as any[]), ...custom];
   }, []);
 
   const problem = useMemo(() => {
