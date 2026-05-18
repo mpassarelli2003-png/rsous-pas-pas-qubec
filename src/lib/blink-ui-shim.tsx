@@ -55,20 +55,21 @@ export const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
 CardFooter.displayName = 'CardFooter';
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'default' | 'outline' | 'ghost' | 'secondary' | 'destructive' | 'link';
+  variant?: 'default' | 'primary' | 'outline' | 'ghost' | 'secondary' | 'destructive' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   asChild?: boolean;
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant = 'default', size = 'default', asChild, children, ...props }, ref) => {
+  const normalizedVariant = variant === 'primary' ? 'default' : variant;
   const classes = cn(
     'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-    variant === 'default' && 'bg-primary text-primary-foreground hover:bg-primary/90',
-    variant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-    variant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
-    variant === 'secondary' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    variant === 'destructive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-    variant === 'link' && 'text-primary underline-offset-4 hover:underline',
+    normalizedVariant === 'default' && 'bg-primary text-primary-foreground hover:bg-primary/90',
+    normalizedVariant === 'outline' && 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+    normalizedVariant === 'ghost' && 'hover:bg-accent hover:text-accent-foreground',
+    normalizedVariant === 'secondary' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+    normalizedVariant === 'destructive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+    normalizedVariant === 'link' && 'text-primary underline-offset-4 hover:underline',
     size === 'default' && 'h-10 px-4 py-2',
     size === 'sm' && 'h-9 rounded-md px-3',
     size === 'lg' && 'h-11 rounded-md px-8',
@@ -89,7 +90,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ classN
 Button.displayName = 'Button';
 
 export const Badge = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElement> & { variant?: string }>(({ className, children, variant, ...props }, ref) => (
-  <span ref={ref} className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors', variant === 'outline' ? 'border-current bg-transparent' : 'border-transparent bg-primary text-primary-foreground', className)} {...props}>{children}</span>
+  <span ref={ref} className={cn('inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors', variant === 'outline' ? 'border-current bg-transparent' : variant === 'secondary' ? 'border-transparent bg-secondary text-secondary-foreground' : 'border-transparent bg-primary text-primary-foreground', className)} {...props}>{children}</span>
 ));
 Badge.displayName = 'Badge';
 
@@ -114,19 +115,7 @@ export function Checkbox({ checked, onCheckedChange, className, ...props }: { ch
 
 export function Switch({ checked, onCheckedChange, className, disabled, ...props }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void; className?: string; disabled?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={!!checked}
-      disabled={disabled}
-      onClick={() => !disabled && onCheckedChange?.(!checked)}
-      className={cn(
-        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-        checked ? 'bg-primary' : 'bg-input',
-        className
-      )}
-      {...props}
-    >
+    <button type="button" role="switch" aria-checked={!!checked} disabled={disabled} onClick={() => !disabled && onCheckedChange?.(!checked)} className={cn('relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50', checked ? 'bg-primary' : 'bg-input', className)} {...props}>
       <span className={cn('pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform', checked ? 'translate-x-5' : 'translate-x-0')} />
     </button>
   );
@@ -134,17 +123,37 @@ export function Switch({ checked, onCheckedChange, className, disabled, ...props
 
 export function Slider({ value = [0], min = 0, max = 100, step = 1, onValueChange, className, ...props }: { value?: number[]; min?: number; max?: number; step?: number; onValueChange?: (value: number[]) => void; className?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'min' | 'max' | 'step' | 'onChange'>) {
   const current = Array.isArray(value) ? value[0] ?? min : min;
+  return <input type="range" min={min} max={max} step={step} value={current} onChange={(e) => onValueChange?.([Number(e.target.value)])} className={cn('w-full cursor-pointer accent-primary', className)} {...props} />;
+}
+
+export const Avatar = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, children, ...props }, ref) => (
+  <div ref={ref} className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)} {...props}>{children}</div>
+));
+Avatar.displayName = 'Avatar';
+
+export const AvatarFallback = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, children, ...props }, ref) => (
+  <div ref={ref} className={cn('flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground', className)} {...props}>{children}</div>
+));
+AvatarFallback.displayName = 'AvatarFallback';
+
+export function TooltipProvider({ children }: { children: React.ReactNode; delayDuration?: number }) {
+  return <>{children}</>;
+}
+
+export function Tooltip({ children }: { children: React.ReactNode }) {
+  return <span className="relative inline-flex group">{children}</span>;
+}
+
+export function TooltipTrigger({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) {
+  if (asChild && React.isValidElement(children)) return children;
+  return <span>{children}</span>;
+}
+
+export function TooltipContent({ children, className, side: _side, ...props }: AnyProps & { side?: string }) {
   return (
-    <input
-      type="range"
-      min={min}
-      max={max}
-      step={step}
-      value={current}
-      onChange={(e) => onValueChange?.([Number(e.target.value)])}
-      className={cn('w-full cursor-pointer accent-primary', className)}
-      {...props}
-    />
+    <span className={cn('pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md group-hover:inline-flex', className)} {...props}>
+      {children}
+    </span>
   );
 }
 
@@ -153,10 +162,7 @@ const TabsContext = createContext<{ value?: string; setValue?: (value: string) =
 export function Tabs({ value, defaultValue, onValueChange, children, className, ...props }: AnyProps & { value?: string; defaultValue?: string; onValueChange?: (value: string) => void }) {
   const [internal, setInternal] = useState(defaultValue);
   const current = value ?? internal;
-  const setValue = (next: string) => {
-    setInternal(next);
-    onValueChange?.(next);
-  };
+  const setValue = (next: string) => { setInternal(next); onValueChange?.(next); };
   return <TabsContext.Provider value={{ value: current, setValue }}><div className={cn('w-full', className)} {...props}>{children}</div></TabsContext.Provider>;
 }
 
@@ -195,13 +201,8 @@ function extractSelectItems(children: React.ReactNode): React.ReactElement<any>[
   const items: React.ReactElement<any>[] = [];
   React.Children.forEach(children, child => {
     if (!React.isValidElement(child)) return;
-    if ('value' in child.props) {
-      items.push(child as React.ReactElement<any>);
-      return;
-    }
-    if (child.props?.children) {
-      items.push(...extractSelectItems(child.props.children));
-    }
+    if ('value' in child.props) { items.push(child as React.ReactElement<any>); return; }
+    if (child.props?.children) items.push(...extractSelectItems(child.props.children));
   });
   return items;
 }
@@ -210,18 +211,10 @@ export function SelectContent({ className, children, ...props }: AnyProps) {
   const ctx = useContext(SelectContext);
   const items = useMemo(() => extractSelectItems(children), [children]);
   const currentValue = ctx.value ?? ctx.defaultValue ?? '';
-
   return (
-    <select
-      className={cn('h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50', className)}
-      value={currentValue}
-      onChange={(e) => ctx.onValueChange?.(e.target.value)}
-      {...props}
-    >
+    <select className={cn('h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50', className)} value={currentValue} onChange={(e) => ctx.onValueChange?.(e.target.value)} {...props}>
       {!currentValue && <option value="" disabled>Choisir...</option>}
-      {items.map((item, index) => (
-        <option key={`${item.props.value}-${index}`} value={item.props.value}>{item.props.children}</option>
-      ))}
+      {items.map((item, index) => <option key={`${item.props.value}-${index}`} value={item.props.value}>{item.props.children}</option>)}
     </select>
   );
 }
@@ -230,16 +223,9 @@ export function SelectItem({ children }: { value: string; children: React.ReactN
   return <>{children}</>;
 }
 
-export function Toaster(props: any) {
-  return <HotToaster {...props} />;
-}
+export function Toaster(props: any) { return <HotToaster {...props} />; }
 
-type ToastFunction = ((message: string) => string) & {
-  success: (message: string) => string;
-  error: (message: string) => string;
-  info: (message: string) => string;
-};
-
+type ToastFunction = ((message: string) => string) & { success: (message: string) => string; error: (message: string) => string; info: (message: string) => string; };
 export const toast = ((message: string) => hotToast(message)) as ToastFunction;
 toast.success = (message: string) => hotToast.success(message);
 toast.error = (message: string) => hotToast.error(message);
