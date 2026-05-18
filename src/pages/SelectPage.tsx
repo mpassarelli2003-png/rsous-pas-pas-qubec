@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { BookOpen, GraduationCap, Trophy, ChevronRight, Zap, SlidersHorizontal } from 'lucide-react';
 import problemsData from '../data/problems.json';
 import pfeq5Batch2 from '../data/pfeq5-batch2.json';
+import pfeq5Batch3 from '../data/pfeq5-batch3.json';
 import { cn } from '@/lib/utils';
 import { useSearch } from '@tanstack/react-router';
 import { loadCustomProblems } from '../lib/adminStore';
@@ -40,7 +41,7 @@ export function SelectPage() {
 
   const allProblems = useMemo(() => {
     const custom = loadCustomProblems().filter(p => p.status === 'publie');
-    return [...(problemsData as any[]), ...(pfeq5Batch2 as any[]), ...custom];
+    return [...(problemsData as any[]), ...(pfeq5Batch2 as any[]), ...(pfeq5Batch3 as any[]), ...custom];
   }, []);
 
   const visibleSubConcepts = useMemo(() => {
