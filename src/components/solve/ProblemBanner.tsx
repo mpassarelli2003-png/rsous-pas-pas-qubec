@@ -9,13 +9,24 @@ interface ProblemBannerProps {
     content: string;
     question: string;
   };
+  highlightedTokenIds?: string[];
+  onToggleHighlight?: (tokenId: string) => void;
 }
 
-export function ProblemBanner({ problem }: ProblemBannerProps) {
+function tokenizeText(text: string) {
+  return text.split(/(\s+)/).filter(part => part.length > 0);
+}
+
+function isHighlightableToken(token: string) {
+  return /[\p{L}\p{N}]/u.test(token);
+}
+
+export function ProblemBanner({ problem, highlightedTokenIds = [], onToggleHighlight }: ProblemBannerProps) {
   const [isReading, setIsReading] = useState(false);
   const [fontSize, setFontSize] = useState(16);
   const [collapsed, setCollapsed] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const highlightedSet = new Set(highlightedTokenIds);
 
   const handleReadAloud = () => {
     if (!('speechSynthesis' in window)) return;
@@ -39,6 +50,36 @@ export function ProblemBanner({ problem }: ProblemBannerProps) {
 
   const changeFontSize = (delta: number) => {
     setFontSize(prev => Math.min(Math.max(prev + delta, 13), 24));
+  };
+
+  const renderHighlightableText = (text: string, section: 'content' | 'question') => {
+    const tokens = tokenizeText(text);
+
+    return tokens.map((token, index) => {
+      if (/^\s+$/.test(token)) return token;
+
+      const tokenId = `${section}-${index}`;
+      const isHighlighted = highlightedSet.has(tokenId);
+      const canHighlight = isHighlightableToken(token) && !!onToggleHighlight;
+
+      if (!canHighlight) return token;
+
+      return (
+        <button
+          key={tokenId}
+          type="button"
+          onClick={() => onToggleHighlight?.(tokenId)}
+          className={cn(
+            'inline rounded px-0.5 text-left transition-colors hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1',
+            isHighlighted && 'bg-yellow-200 hover:bg-yellow-300 shadow-[inset_0_-0.35em_0_rgba(250,204,21,0.45)]'
+          )}
+          aria-pressed={isHighlighted}
+          title={isHighlighted ? 'Retirer le surlignage' : 'Surligner ce mot'}
+        >
+          {token}
+        </button>
+      );
+    });
   };
 
   return (
@@ -98,10 +139,15 @@ export function ProblemBanner({ problem }: ProblemBannerProps) {
           className="px-5 py-4 space-y-3 bg-white"
           style={{ fontSize: `${fontSize}px`, lineHeight: 1.65 }}
         >
-          <p className="text-foreground leading-relaxed">{problem.content}</p>
+          {onToggleHighlight && (
+            <p className="inline-flex rounded-lg bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-900 border border-yellow-200">
+              Clique sur les nombres, les mots importants ou la question pour les surligner.
+            </p>
+          )}
+          <p className="text-foreground leading-relaxed">{renderHighlightableText(problem.content, 'content')}</p>
           <div className="flex items-start gap-2 pt-2 border-t border-primary/10">
             <span className="shrink-0 mt-0.5 h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">?</span>
-            <p className="font-bold text-primary leading-snug">{problem.question}</p>
+            <p className="font-bold text-primary leading-snug">{renderHighlightableText(problem.question, 'question')}</p>
           </div>
         </div>
       )}
