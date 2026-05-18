@@ -2,8 +2,9 @@
  * PlanTable — Tableau de planification des étapes de calcul.
  * Affiché à l'étape 4B pour planifier, et en lecture seule à l'étape 5 comme rappel.
  */
+import { useState } from 'react';
 import { Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/ui';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface PlanRow {
@@ -43,12 +44,14 @@ const ACTION_STARTERS = [
 ];
 
 const actionPlaceholders = [
-  'Je calcule le total des informations utiles.',
-  'J’ajoute la prochaine quantité au total.',
-  'Je trouve la réponse demandée.',
+  'Ex. : Je calcule le total des adultes et des enfants.',
+  'Ex. : J’ajoute les autres personnes au total.',
+  'Ex. : Je trouve la réponse demandée.',
 ];
 
 export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDeleteRow }: PlanTableProps) {
+  const [showWritingHelp, setShowWritingHelp] = useState(false);
+
   const update = (index: number, field: keyof PlanRow, value: string) => {
     if (!onChange) return;
     const next = rows.map((r, i) => i === index ? { ...r, [field]: value } : r);
@@ -65,6 +68,31 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
 
   return (
     <div className="space-y-3">
+      {!readOnly && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-sm text-blue-950 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="font-semibold">Écris une phrase complète.</p>
+            <p className="text-blue-900">Exemple : Je calcule le total des adultes et des enfants.</p>
+          </div>
+          <div className="relative shrink-0">
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowWritingHelp(prev => !prev)} className="gap-2 border-blue-200 bg-white text-blue-800 hover:bg-blue-100">
+              <HelpCircle className="h-4 w-4" /> Pourquoi ?
+            </Button>
+            {showWritingHelp && (
+              <div className="absolute right-0 z-20 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-blue-200 bg-white p-3 text-sm text-slate-700 shadow-lg">
+                <p className="font-bold text-slate-900 mb-1">Pourquoi écrire avec des mots ?</p>
+                <p className="leading-snug">Ici, on ne fait pas encore le calcul. On explique le plan. Les mots aident à dire ce qu’on va faire : calculer un total, enlever une quantité, comparer, regrouper ou partager.</p>
+                <p className="mt-2 font-bold text-slate-900">Bon exemple</p>
+                <p className="text-blue-800">Je calcule le total des adultes et des enfants.</p>
+                <p className="mt-2 font-bold text-slate-900">À éviter</p>
+                <p className="text-slate-600">245 + 138</p>
+                <p className="mt-2 text-slate-600">Les chiffres seront utilisés à l’étape du calcul. Ici, on prépare la démarche.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-xl border-2 border-primary/20 shadow-sm">
         <table className="w-full text-sm border-collapse">
           <thead>
@@ -102,7 +130,7 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                       <Input
                         value={row.action}
                         onChange={e => update(i, 'action', e.target.value)}
-                        placeholder={actionPlaceholders[i] || 'Je calcule ce dont j’ai besoin pour avancer.'}
+                        placeholder={actionPlaceholders[i] || 'Ex. : Je calcule ce dont j’ai besoin pour avancer.'}
                         className="border-primary/20 focus:border-primary text-sm h-9"
                       />
                       <div className="flex flex-wrap gap-1.5">
