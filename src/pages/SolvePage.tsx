@@ -155,6 +155,7 @@ export function SolvePage() {
 
   const progress = (currentStep / 6) * 100;
   const problemHints = problem.hints ?? undefined;
+  const bodyWidthClass = currentStep === 1 ? 'max-w-6xl' : 'max-w-4xl';
 
   return (
     <Page>
@@ -182,7 +183,7 @@ export function SolvePage() {
         </div>
       </PageHeader>
 
-      <PageBody className="pb-24 pt-6 max-w-4xl mx-auto w-full">
+      <PageBody className={`pb-24 pt-6 ${bodyWidthClass} mx-auto w-full`}>
         <ProblemBanner problem={problem} />
 
         {hintOpen && (
@@ -208,7 +209,7 @@ export function SolvePage() {
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur border-t z-20 flex justify-center">
-          <div className="max-w-4xl w-full flex justify-between gap-4">
+          <div className={`${bodyWidthClass} w-full flex justify-between gap-4`}>
             <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2"><ChevronLeft className="h-4 w-4" /> Précédent</Button>
             {currentStep === 6 ? (
               <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={handleFinish}>Terminer le problème <CheckCircle2 className="h-4 w-4" /></Button>
