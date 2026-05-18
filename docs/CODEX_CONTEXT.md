@@ -1,42 +1,32 @@
-# Contexte pour Codex — Migration hors Blink
+# Contexte Codex — finaliser la migration hors Blink
 
-## Objectif général
+## Situation actuelle
 
-L’application `resous-pas-a-pas-quebec` doit devenir complètement indépendante de Blink.
+Application : `resous-pas-a-pas-quebec`
 
-Elle doit fonctionner comme une application React/Vite autonome, déployée sur Vercel à partir de GitHub.
-
-Objectif final :
-
-- aucun import `@blinkdotnew/*`;
-- aucune dépendance `@blinkdotnew/*` dans `package.json`;
-- aucun import CSS Blink;
-- build Vercel fonctionnel avec `npm run build`;
-- interface conservée autant que possible;
-- ne pas réintroduire Blink.
-
-## Dépôt
-
-Repository :
+Dépôt :
 
 ```text
 mpassarelli2003-png/rsous-pas-pas-qubec
 ```
 
-Stack actuelle :
+Stack : React, Vite, TypeScript, Tailwind, TanStack Router, Vercel.
 
-- React
-- Vite
-- TypeScript
-- Tailwind
-- TanStack Router
-- Vercel
+La migration hors Blink est avancée, mais le build Vercel échoue encore.
 
-## Changements déjà faits
+## Objectif
 
-Les providers Blink ont été retirés de `src/main.tsx`.
+Terminer la migration pour que l’application soit autonome :
 
-Les anciennes dépendances suivantes ont été retirées de `package.json` :
+- pas d’import `@blinkdotnew/*`;
+- pas de dépendance `@blinkdotnew/*` dans `package.json`;
+- pas d’import CSS Blink;
+- `npm run build` doit réussir;
+- l’interface actuelle doit être conservée autant que possible.
+
+## État vérifié
+
+`package.json` ne contient plus les dépendances Blink suivantes :
 
 ```json
 "@blinkdotnew/react"
@@ -44,83 +34,31 @@ Les anciennes dépendances suivantes ont été retirées de `package.json` :
 "@blinkdotnew/ui"
 ```
 
-Un module UI local a été créé :
+Le build utilise :
+
+```json
+"prebuild": "node scripts/migrate-ui-imports.mjs",
+"build": "vite build"
+```
+
+Le module UI local existe :
 
 ```text
 src/lib/ui.tsx
 src/lib/blink-ui-shim.tsx
 ```
 
-Le fichier `src/lib/ui.tsx` réexporte actuellement le shim local.
+`src/lib/ui.tsx` contient :
+
+```ts
+export * from './blink-ui-shim';
+```
 
 Le CSS Blink a été retiré de `src/index.css`.
 
-Ancienne ligne supprimée :
+## Erreur actuelle connue
 
-```css
-@import '@blinkdotnew/ui/styles';
-```
-
-Un script de migration a été ajouté :
-
-```text
-scripts/migrate-ui-imports.mjs
-```
-
-Il remplace les imports :
-
-```ts
-from '@blinkdotnew/ui'
-```
-
-par :
-
-```ts
-from '@/lib/ui'
-```
-
-Le script est exécuté avant le build grâce à :
-
-```json
-"prebuild": "node scripts/migrate-ui-imports.mjs"
-```
-
-## Erreurs Vercel récentes
-
-### Erreur CSS Blink corrigée
-
-Vercel échouait sur une résolution PostCSS liée à :
-
-```css
-@import '@blinkdotnew/ui/styles';
-```
-
-Correction appliquée : l’import CSS Blink a été retiré de `src/index.css`.
-
-### Erreur import Blink corrigée partiellement
-
-Vercel échouait sur :
-
-```text
-Rollup failed to resolve import "@blinkdotnew/ui"
-from "/src/components/AppSidebarShell.tsx"
-```
-
-Correction appliquée :
-
-- `src/components/AppSidebarShell.tsx` importe maintenant depuis `@/lib/ui`;
-- `src/lib/blink-ui-shim.tsx` exporte maintenant :
-  - `Avatar`
-  - `AvatarFallback`
-  - `Tooltip`
-  - `TooltipProvider`
-  - `TooltipTrigger`
-  - `TooltipContent`
-  - support du variant `primary` dans `Button`
-
-### Erreur actuelle à corriger
-
-Le build Vercel échoue maintenant avec :
+Vercel signale des exports manquants :
 
 ```text
 [MISSING_EXPORT] "AppShell" is not exported by "src/lib/ui.tsx".
@@ -129,7 +67,7 @@ src/Shell.tsx:13:10
 import { AppShell, AppShellSidebar, AppShellMain, MobileSidebarTrigger } from "@/lib/ui";
 ```
 
-Autres exports manquants probables :
+Composants probablement à ajouter localement :
 
 ```text
 AppShell
@@ -138,7 +76,13 @@ AppShellMain
 MobileSidebarTrigger
 ```
 
-## Travail demandé à Codex
+Fichier concerné :
+
+```text
+src/Shell.tsx
+```
+
+## Travail demandé
 
 1. Exécuter :
 
@@ -147,29 +91,37 @@ npm install
 npm run build
 ```
 
-2. Corriger toutes les erreurs de build liées à la migration hors Blink.
+2. Corriger l’erreur actuelle en ajoutant des versions locales simples et robustes des composants manquants dans :
 
-3. Ne pas réinstaller `@blinkdotnew/*`.
-
-4. Ne pas réintroduire :
-
-```ts
-@blinkdotnew/ui
-@blinkdotnew/react
-@blinkdotnew/sdk
+```text
+src/lib/blink-ui-shim.tsx
 ```
 
-5. Ajouter dans `src/lib/ui.tsx` ou `src/lib/blink-ui-shim.tsx` les composants locaux manquants si nécessaire.
+ou dans :
 
-6. Relancer :
+```text
+src/lib/ui.tsx
+```
+
+3. Relancer :
 
 ```bash
 npm run build
 ```
 
-jusqu’à ce que le build réussisse.
+4. Continuer jusqu’à ce que le build réussisse.
 
-7. Vérifier ensuite les pages principales :
+5. Ajouter tout autre composant UI local manquant au besoin.
+
+## Contraintes
+
+- Ne pas réinstaller `@blinkdotnew/react`, `@blinkdotnew/sdk` ou `@blinkdotnew/ui`.
+- Ne pas réintroduire d’import `@blinkdotnew/*`.
+- Ne pas supprimer les pages principales pour contourner les erreurs.
+- Garder l’application React/Vite/Tailwind autonome.
+- Priorité : build fonctionnel et interface stable.
+
+## Routes à préserver
 
 ```text
 /
@@ -181,42 +133,23 @@ jusqu’à ce que le build réussisse.
 /admin
 ```
 
-## Priorité
-
-La priorité n’est pas de refaire le design.
-
-La priorité est :
-
-1. build Vercel fonctionnel;
-2. app indépendante de Blink;
-3. interface stable;
-4. aucun retour aux dépendances Blink.
-
-## Attention
-
-Ne pas corriger seulement l’erreur visible. Il faut exécuter le build, corriger, relancer, corriger, relancer jusqu’à succès.
-
-Ne pas supprimer des pages ou composants pour “faire passer” le build.
-
-Si un composant UI manque, créer une version locale simple et robuste.
-
-## Prompt recommandé à donner à Codex
+## Prompt recommandé
 
 ```text
 Lis docs/CODEX_CONTEXT.md.
 
-Objectif : terminer proprement la migration de l’application hors Blink.
+Objectif : terminer la migration de l’application hors Blink.
 
-Exécute npm install puis npm run build. Corrige toutes les erreurs de build jusqu’à ce que npm run build réussisse.
+Exécute npm install puis npm run build. Corrige les erreurs de build jusqu’à ce que npm run build réussisse.
+
+Erreur actuelle connue : AppShell, AppShellSidebar, AppShellMain et MobileSidebarTrigger ne sont pas exportés par src/lib/ui.tsx, mais sont utilisés dans src/Shell.tsx.
 
 Contraintes :
-- ne réinstalle jamais @blinkdotnew/react, @blinkdotnew/sdk ou @blinkdotnew/ui;
+- ne réinstalle pas @blinkdotnew/react, @blinkdotnew/sdk ou @blinkdotnew/ui;
 - ne réintroduis aucun import @blinkdotnew/*;
 - conserve l’app React/Vite/Tailwind autonome;
-- si des composants UI sont manquants, ajoute des versions locales dans src/lib/ui.tsx ou src/lib/blink-ui-shim.tsx;
+- ajoute les composants UI manquants localement dans src/lib/blink-ui-shim.tsx ou src/lib/ui.tsx;
 - ne supprime pas les pages principales pour contourner les erreurs;
+- relance npm run build après chaque correction importante;
 - à la fin, donne la liste des fichiers modifiés et le résultat exact du build.
-
-Commence par l’erreur actuelle :
-[MISSING_EXPORT] AppShell, AppShellSidebar, AppShellMain, MobileSidebarTrigger are not exported by src/lib/ui.tsx, used in src/Shell.tsx.
 ```
