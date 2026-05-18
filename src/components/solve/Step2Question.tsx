@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Textarea, Badge } from '@blinkdotnew/ui';
+import { Textarea, Badge } from '@/lib/ui';
 import { Search, Highlighter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
