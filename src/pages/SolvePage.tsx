@@ -33,6 +33,7 @@ export function SolvePage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<any>({});
+  const [highlightedTokenIds, setHighlightedTokenIds] = useState<string[]>([]);
 
   const [hintOpen, setHintOpen] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
@@ -89,6 +90,14 @@ export function SolvePage() {
 
   const updateAnswer = (stepId: number, data: any) => {
     setAnswers((prev: any) => ({ ...prev, [stepId]: data }));
+  };
+
+  const toggleHighlight = (tokenId: string) => {
+    setHighlightedTokenIds(prev =>
+      prev.includes(tokenId)
+        ? prev.filter(id => id !== tokenId)
+        : [...prev, tokenId]
+    );
   };
 
   const handleFinish = () => {
@@ -184,7 +193,7 @@ export function SolvePage() {
       </PageHeader>
 
       <PageBody className={`pb-24 pt-6 ${bodyWidthClass} mx-auto w-full`}>
-        <ProblemBanner problem={problem} />
+        <ProblemBanner problem={problem} highlightedTokenIds={highlightedTokenIds} onToggleHighlight={toggleHighlight} />
 
         {hintOpen && (
           <div className="mb-6">
