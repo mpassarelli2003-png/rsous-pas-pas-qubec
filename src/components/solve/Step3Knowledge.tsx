@@ -325,6 +325,26 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
 
       <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
         <aside className="w-full lg:sticky lg:top-28 lg:self-start space-y-3 z-[1]">
+          <div className="rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm">
+            <h4 className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
+              <EyeOff className="h-4 w-4 shrink-0" />
+              Aide-mémoire
+            </h4>
+            <div className="space-y-3 text-sm text-blue-950 leading-snug">
+              <div>
+                <p className="font-bold text-blue-950">Info utile</p>
+                <p>Aide à répondre à la question : nombre, mesure, prix, durée, quantité ou condition.</p>
+              </div>
+              <div>
+                <p className="font-bold text-blue-950">Info inutile</p>
+                <p>Donne du contexte, mais n’est pas nécessaire pour faire le calcul.</p>
+              </div>
+              <div className="rounded-lg border border-blue-200 bg-white/70 px-3 py-2 text-blue-900 font-medium">
+                Est-ce que j’en ai besoin pour trouver la réponse ?
+              </div>
+            </div>
+          </div>
+
           <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-3 shadow-sm">
             <h4 className="text-[11px] font-bold uppercase tracking-widest text-yellow-800 flex items-center gap-2 mb-2">
               <Highlighter className="h-4 w-4 shrink-0" />
@@ -342,26 +362,6 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
               <p className="text-sm text-yellow-900 leading-snug">Les mots et nombres surlignés dans l’énoncé apparaîtront ici.</p>
             )}
             <p className="mt-2 text-xs text-yellow-800 italic">Clique sur une pastille pour l’ajouter à ta liste.</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
-            <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
-              <EyeOff className="h-4 w-4 shrink-0" />
-              Aide-mémoire
-            </h4>
-            <div className="space-y-3 text-sm text-slate-700 leading-snug">
-              <div>
-                <p className="font-bold text-slate-900">Info utile</p>
-                <p>Aide à répondre à la question : nombre, mesure, prix, durée, quantité ou condition.</p>
-              </div>
-              <div>
-                <p className="font-bold text-slate-900">Info inutile</p>
-                <p>Donne du contexte, mais n’est pas nécessaire pour faire le calcul.</p>
-              </div>
-              <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-blue-900">
-                Est-ce que j’en ai besoin pour trouver la réponse ?
-              </div>
-            </div>
           </div>
         </aside>
 
