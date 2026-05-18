@@ -30,8 +30,7 @@
     "allowUnusedLabels": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@blinkdotnew/ui": ["./src/lib/blink-ui-shim.tsx"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
