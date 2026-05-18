@@ -235,7 +235,7 @@ export function SolvePage() {
           <div className="min-h-[400px]">
             {currentStep === 1 && <Step1Read problem={problem} onUpdate={(data) => updateAnswer(1, data)} savedData={answers[1]} />}
             {currentStep === 2 && <Step2Question problem={problem} onUpdate={(data) => updateAnswer(2, data)} savedData={answers[2]} highlightedTokenIds={highlightedTokenIds} />}
-            {currentStep === 3 && <Step3Knowledge problem={problem} onUpdate={(data) => updateAnswer(3, data)} savedData={answers[3]} />}
+            {currentStep === 3 && <Step3Knowledge problem={problem} onUpdate={(data) => updateAnswer(3, data)} savedData={answers[3]} highlightedTokenIds={highlightedTokenIds} />}
             {currentStep === 4 && <Step4Plan problem={problem} onUpdate={(data) => updateAnswer(4, data)} savedData={answers[4]} step3Data={answers[3]} />}
             {currentStep === 5 && <Step5Solve problem={problem} onUpdate={(data) => updateAnswer(5, data)} savedData={answers[5]} planData={answers[4]} step3Data={answers[3]} />}
             {currentStep === 6 && <Step6Answer problem={problem} onUpdate={(data) => updateAnswer(6, data)} savedData={answers[6]} />}
