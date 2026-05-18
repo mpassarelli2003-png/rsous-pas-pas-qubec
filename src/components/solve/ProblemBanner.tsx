@@ -199,7 +199,7 @@ export function ProblemBanner({
                 </div>
               ) : (
                 <p className="inline-flex rounded-lg bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-900 border border-yellow-200">
-                  1 clic pour sélectionner. 2e clic pour désélectionner.
+                  1 clic pour surligner. 2e clic pour désurligner.
                 </p>
               )}
               {showMarkTools && (
@@ -211,7 +211,7 @@ export function ProblemBanner({
                 )}>
                   {markMode === 'strike'
                     ? '1 clic pour rayer. 2e clic pour enlever la rature.'
-                    : '1 clic pour sélectionner. 2e clic pour désélectionner.'}
+                    : '1 clic pour surligner. 2e clic pour désurligner.'}
                 </p>
               )}
             </div>
