@@ -30,11 +30,15 @@ const OP_OPTIONS = [
 
 const ACTION_STARTERS = [
   'Je calcule',
+  'Je trouve',
+  'Je cherche',
   'J’ajoute',
   'J’enlève',
   'Je compare',
+  'Je regroupe',
   'Je partage',
-  'Je trouve',
+  'Je multiplie',
+  'Je divise',
   'Je vérifie',
 ];
 
