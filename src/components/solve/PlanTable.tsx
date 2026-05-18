@@ -44,8 +44,8 @@ const ACTION_STARTERS = [
 ];
 
 const actionPlaceholders = [
-  'Ex. : Je calcule le total des adultes et des enfants.',
-  'Ex. : J’ajoute les autres personnes au total.',
+  'Ex. : Je calcule le total de deux groupes.',
+  'Ex. : J’ajoute une autre quantité au total.',
   'Ex. : Je trouve la réponse demandée.',
 ];
 
@@ -72,7 +72,7 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
         <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-3 py-2 text-sm text-blue-950 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="font-semibold">Écris une phrase complète.</p>
-            <p className="text-blue-900">Exemple : Je calcule le total des adultes et des enfants.</p>
+            <p className="text-blue-900">Exemple : Je calcule le total de deux groupes.</p>
           </div>
           <div className="relative shrink-0">
             <Button type="button" variant="outline" size="sm" onClick={() => setShowWritingHelp(prev => !prev)} className="gap-2 border-blue-200 bg-white text-blue-800 hover:bg-blue-100">
@@ -83,10 +83,10 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                 <p className="font-bold text-slate-900 mb-1">Pourquoi écrire avec des mots ?</p>
                 <p className="leading-snug">Ici, on ne fait pas encore le calcul. On explique le plan. Les mots aident à dire ce qu’on va faire : calculer un total, enlever une quantité, comparer, regrouper ou partager.</p>
                 <p className="mt-2 font-bold text-slate-900">Bon exemple</p>
-                <p className="text-blue-800">Je calcule le total des adultes et des enfants.</p>
+                <p className="text-blue-800">Je calcule le total de deux groupes.</p>
                 <p className="mt-2 font-bold text-slate-900">À éviter</p>
-                <p className="text-slate-600">245 + 138</p>
-                <p className="mt-2 text-slate-600">Les chiffres seront utilisés à l’étape du calcul. Ici, on prépare la démarche.</p>
+                <p className="text-slate-600">nombre + nombre</p>
+                <p className="mt-2 text-slate-600">Les nombres seront utilisés à l’étape du calcul. Ici, on prépare la démarche avec des mots.</p>
               </div>
             )}
           </div>
