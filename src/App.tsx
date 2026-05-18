@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet, useLocation } from '@tanstack/react-router';
-import { Toaster } from '@blinkdotnew/ui';
+import { Toaster } from '@/lib/ui';
 import { SharedAppLayout } from './layouts/shared-app-layout';
 
 // Import pages
