@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Button } from '@blinkdotnew/ui';
+import { Button } from '@/lib/ui';
 import { Volume2, VolumeX, ZoomIn, ZoomOut, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
