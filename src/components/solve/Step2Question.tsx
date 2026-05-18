@@ -15,7 +15,13 @@ function tokenizeText(text: string) {
 }
 
 function cleanToken(token: string) {
-  return token.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+  const value = token
+    .trim()
+    .replace(/[−–—]/g, '-')
+    .replace(/^[^\p{L}\p{N}+\-°]+/gu, '')
+    .replace(/[^\p{L}\p{N}°]+$/gu, '');
+
+  return /^[+\-](?!\d)/.test(value) ? value.slice(1) : value;
 }
 
 function getHighlightedContentTokens(content: string, highlightedTokenIds: string[] = []) {
@@ -66,7 +72,6 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
-      {/* ── Colonne gauche fixe : aide compacte, même esprit que l'étape 1 ── */}
       <aside className="w-full lg:sticky lg:top-28 lg:self-start space-y-3 z-[1]">
         <div className="rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
@@ -110,7 +115,6 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
         </div>
       </aside>
 
-      {/* ── Zone principale : consigne + réponse ── */}
       <div className="min-w-0">
         <div className="rounded-xl border-2 border-primary/20 bg-white px-4 py-3 shadow-sm">
           <div className="space-y-2">
