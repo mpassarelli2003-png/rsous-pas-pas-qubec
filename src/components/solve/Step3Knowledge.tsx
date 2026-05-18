@@ -92,6 +92,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
   const [organizer, setOrganizer] = useState<OrganizerId>(savedData?.organizer || 'list');
   const [important, setImportant] = useState(savedData?.important || '');
   const [workspace, setWorkspace] = useState<Record<string, any>>(savedData?.workspace || {});
+  const [activeListRowIndex, setActiveListRowIndex] = useState(0);
   const highlightedContentTokens = getHighlightedContentTokens(problem?.content || '', highlightedTokenIds);
 
   const emitUpdate = (nextOrganizer: OrganizerId, nextImportant: string, nextWorkspace: Record<string, any>) => {
@@ -126,6 +127,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
     const serialized = serializeListRows(rows);
     setWorkspace(nextWorkspace);
     setImportant(serialized);
+    setActiveListRowIndex(rowIndex);
     emitUpdate(organizer, serialized, nextWorkspace);
   };
 
@@ -133,6 +135,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
     const rows = [...getListRows(), { value: '' }];
     const nextWorkspace = { ...workspace, list: rows };
     setWorkspace(nextWorkspace);
+    setActiveListRowIndex(rows.length - 1);
     emitUpdate(organizer, serializeListRows(rows), nextWorkspace);
   };
 
@@ -143,6 +146,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
     const serialized = serializeListRows(safeRows);
     setWorkspace(nextWorkspace);
     setImportant(serialized);
+    setActiveListRowIndex(Math.min(rowIndex, safeRows.length - 1));
     emitUpdate(organizer, serialized, nextWorkspace);
   };
 
@@ -167,15 +171,18 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
 
   const addHighlightedTokenToList = (token: string) => {
     const rows = getListRows();
-    const emptyIndex = rows.findIndex(row => !row.value?.trim());
-    const nextRows = emptyIndex >= 0
-      ? rows.map((row, index) => index === emptyIndex ? { value: token } : row)
-      : [...rows, { value: token }];
+    const safeIndex = Math.min(activeListRowIndex, rows.length - 1);
+    const nextRows = rows.map((row, index) => {
+      if (index !== safeIndex) return row;
+      const current = row.value?.trim() || '';
+      return { value: current ? `${current} ${token}` : token };
+    });
     const nextWorkspace = { ...workspace, list: nextRows };
     const serialized = serializeListRows(nextRows);
     setOrganizer('list');
     setWorkspace(nextWorkspace);
     setImportant(serialized);
+    setActiveListRowIndex(safeIndex);
     emitUpdate('list', serialized, nextWorkspace);
   };
 
@@ -277,13 +284,13 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
       return (
         <div className="space-y-3">
           <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-900">
-            Écris une seule donnée importante par ligne. Les points de forme sont déjà préparés pour t’aider à ne pas tout mélanger.
+            Clique d’abord dans la ligne où tu veux écrire. Ensuite, clique sur les pastilles pour les ajouter sur cette même ligne.
           </div>
           <div className="space-y-2">
             {rows.map((row, index) => (
               <div key={index} className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">•</span>
-                <input className={inputClass} placeholder={`Donnée importante ${index + 1}`} value={row.value} onChange={e => updateListRow(index, e.target.value)} />
+                <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold', activeListRowIndex === index ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary')}>•</span>
+                <input className={cn(inputClass, activeListRowIndex === index && 'border-primary ring-2 ring-primary/20')} placeholder={`Donnée importante ${index + 1}`} value={row.value} onFocus={() => setActiveListRowIndex(index)} onChange={e => updateListRow(index, e.target.value)} />
                 <Button variant="ghost" size="icon" onClick={() => removeListRow(index)} className="shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50" aria-label="Supprimer cette donnée">
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -350,7 +357,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
             {highlightedContentTokens.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {highlightedContentTokens.map((token, index) => (
-                  <button key={`${token}-${index}`} type="button" onClick={() => addHighlightedTokenToList(token)} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950 hover:bg-yellow-300 transition-colors" title="Ajouter à la liste">
+                  <button key={`${token}-${index}`} type="button" onClick={() => addHighlightedTokenToList(token)} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950 hover:bg-yellow-300 transition-colors" title="Ajouter à la ligne active">
                     {token}
                   </button>
                 ))}
@@ -358,7 +365,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
             ) : (
               <p className="text-sm text-yellow-900 leading-snug">Les mots et nombres surlignés dans l’énoncé apparaîtront ici.</p>
             )}
-            <p className="mt-2 text-xs text-yellow-800 italic">Clique sur une pastille pour l’ajouter à ta liste.</p>
+            <p className="mt-2 text-xs text-yellow-800 italic">Clique sur une pastille pour l’ajouter à la ligne active.</p>
           </div>
         </aside>
 
