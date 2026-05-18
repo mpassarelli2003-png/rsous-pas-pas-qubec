@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, BookOpen } from 'lucide-react';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, BookOpen, Highlighter, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
 
@@ -81,6 +81,14 @@ function extractNumbers(text: string): string[] {
   });
 }
 
+function extractImportantItems(text: string): string[] {
+  if (!text) return [];
+  return text
+    .split('\n')
+    .map(line => line.replace(/^\s*•\s*/, '').trim())
+    .filter(Boolean);
+}
+
 export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4PlanProps) {
   const [selectedOps, setSelectedOps] = useState<string[]>(savedData?.selectedOps || []);
   const [estimation, setEstimation] = useState(savedData?.estimation || '');
@@ -134,68 +142,89 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
 
   // Texte noté par l'élève à l'étape 3
   const importantFromStep3 = step3Data?.important?.trim();
+  const importantItems = extractImportantItems(step3Data?.important ?? '');
   // Nombres repérés dans les données importantes
   const step3Numbers = extractNumbers(step3Data?.important ?? '');
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+    <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
 
-      {/* ── Bande gauche : Mes infos utiles ── */}
-      <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-24 lg:self-start space-y-4 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-600 flex items-center gap-1.5">
-          <BookOpen className="h-4 w-4" /> Mes infos utiles
-        </p>
-
-        {/* Question du problème */}
-        {problem?.question && (
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-primary/70">
-              Question
-            </p>
-            <p className="text-sm text-slate-800 leading-snug">
-              {problem.question}
-            </p>
-          </div>
-        )}
-
-        {/* Ce que j'ai noté à l'étape 3 */}
-        <div className="space-y-1 pt-1 border-t border-slate-200">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-green-700">
-            📋 Ce que j'ai noté
+      {/* ── Colonne gauche : continuité visuelle avec les étapes 2 et 3 ── */}
+      <aside className="w-full lg:sticky lg:top-28 lg:self-start space-y-3 z-[1]">
+        <div className="rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
+            <Route className="h-4 w-4 shrink-0" />
+            Aide-mémoire
           </p>
-          {importantFromStep3 ? (
-            <p className="text-sm text-slate-800 whitespace-pre-wrap leading-snug">
-              {importantFromStep3}
-            </p>
-          ) : (
-            <p className="text-xs text-slate-400 italic">
-              Aucune information notée à l'étape 3.
-            </p>
-          )}
+          <ol className="space-y-2 text-sm text-blue-950">
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">1</span>
+              <p className="leading-snug">Je regarde ce que je cherche.</p>
+            </li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">2</span>
+              <p className="leading-snug">Je regarde les infos utiles.</p>
+            </li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">3</span>
+              <p className="leading-snug">Je choisis l’opération.</p>
+            </li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">4</span>
+              <p className="leading-snug">Je prévois mes étapes.</p>
+            </li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">5</span>
+              <p className="leading-snug">J’estime avant de calculer.</p>
+            </li>
+          </ol>
         </div>
 
-        {/* Nombres repérés */}
-        {step3Numbers.length > 0 && (
-          <div className="space-y-1 pt-1 border-t border-slate-200">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              🔢 Nombres repérés
-            </p>
+        <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-3 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-yellow-800 flex items-center gap-2 mb-2">
+            <Highlighter className="h-4 w-4 shrink-0" />
+            Infos utiles
+          </p>
+          {importantItems.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
+              {importantItems.map((item, index) => (
+                <span key={`${item}-${index}`} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950">
+                  {item}
+                </span>
+              ))}
+            </div>
+          ) : importantFromStep3 ? (
+            <p className="text-sm text-yellow-900 whitespace-pre-wrap leading-snug">{importantFromStep3}</p>
+          ) : (
+            <p className="text-sm text-yellow-900 leading-snug">Les infos retenues à l’étape 3 apparaîtront ici.</p>
+          )}
+          {step3Numbers.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5 border-t border-yellow-200 pt-2">
               {step3Numbers.map(num => (
-                <span
-                  key={num}
-                  className="inline-block px-2 py-0.5 rounded-md bg-green-100 border border-green-300 text-green-800 text-xs font-mono font-bold"
-                >
+                <span key={num} className="inline-block rounded-md bg-white px-2 py-0.5 text-xs font-mono font-bold text-yellow-900 border border-yellow-300">
                   {num}
                 </span>
               ))}
             </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
+            <Calculator className="h-4 w-4 shrink-0" />
+            Indices d’opération
+          </p>
+          <div className="space-y-2 text-sm text-slate-700 leading-snug">
+            <p><strong className="text-blue-700">en tout</strong> → +</p>
+            <p><strong className="text-red-700">reste</strong> → −</p>
+            <p><strong className="text-orange-700">groupes de</strong> → ×</p>
+            <p><strong className="text-purple-700">partager</strong> → ÷</p>
           </div>
-        )}
+        </div>
       </aside>
 
       {/* ── Zone principale : 4A, 4B, 4C, plan final ── */}
-      <div className="flex-1 min-w-0 space-y-12">
+      <div className="min-w-0 space-y-12">
 
         {/* ── 4A: Opérations ── */}
         <section className="space-y-4">
