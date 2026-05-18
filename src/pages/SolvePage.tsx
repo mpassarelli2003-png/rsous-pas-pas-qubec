@@ -3,6 +3,7 @@ import { Page, PageBody, PageHeader, PageTitle, Button, Card, Progress } from '@
 import { useParams, Link, useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, CheckCircle2, Home, Lightbulb } from 'lucide-react';
 import problemsData from '../data/problems.json';
+import pfeq5Batch1Rest from '../data/pfeq5-batch1-rest.json';
 import pfeq5Batch2 from '../data/pfeq5-batch2.json';
 import pfeq5Batch3 from '../data/pfeq5-batch3.json';
 import { addCompletedProblem } from '../lib/progressStore';
@@ -33,17 +34,21 @@ export function SolvePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<any>({});
 
-  // Hint state
   const [hintOpen, setHintOpen] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
   const [hintsUsedCount, setHintsUsedCount] = useState(0);
 
-  // Merge static + custom problems
   const allProblems = useMemo(() => {
     const custom = loadCustomProblems()
       .filter(p => p.status === 'publie')
       .map(p => ({ ...p }));
-    return [...(problemsData as any[]), ...(pfeq5Batch2 as any[]), ...(pfeq5Batch3 as any[]), ...custom];
+    return [
+      ...(problemsData as any[]),
+      ...(pfeq5Batch1Rest as any[]),
+      ...(pfeq5Batch2 as any[]),
+      ...(pfeq5Batch3 as any[]),
+      ...custom,
+    ];
   }, []);
 
   const problem = useMemo(() => {
@@ -69,7 +74,6 @@ export function SolvePage() {
   const handleNext = () => {
     if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
-      // Close hint on step change but keep level
       setHintOpen(false);
       window.scrollTo(0, 0);
     }
@@ -84,17 +88,12 @@ export function SolvePage() {
   };
 
   const updateAnswer = (stepId: number, data: any) => {
-    setAnswers((prev: any) => ({
-      ...prev,
-      [stepId]: data,
-    }));
+    setAnswers((prev: any) => ({ ...prev, [stepId]: data }));
   };
 
   const handleFinish = () => {
     const studentAnswer = answers[6]?.answer || '';
     const correctAnswer = problem?.solution_data.final_answer || '';
-    
-    // Simple verification logic
     const modelNumbers = correctAnswer.match(/\d+[,.]?\d*/g) || [];
     const studentNumbers = studentAnswer.match(/\d+[,.]?\d*/g) || [];
     const isCorrect = modelNumbers.length > 0 && modelNumbers.some((n: string) => studentNumbers.includes(n));
@@ -116,45 +115,36 @@ export function SolvePage() {
     if (!stepScores.calculations) needsPractice.push('Précision des calculs');
     if (!stepScores.finalAnswer) needsPractice.push('Résultat final');
 
-    if (problem) {
-      addCompletedProblem({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        problemId: problem.id,
-        date: new Date().toISOString(),
-        level: `${problem.level}e`,
-        theme: problem.theme,
-        title: problem.title,
-        studentAnswer,
-        correctAnswer,
-        isCorrect,
-        hintsUsed: hintsUsedCount,
-        score: isCorrect ? 100 : Math.round((Object.values(stepScores).filter(Boolean).length / 6) * 100),
-        stepScores,
-        needsPractice,
-      });
-    }
+    addCompletedProblem({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      problemId: problem.id,
+      date: new Date().toISOString(),
+      level: `${problem.level}e`,
+      theme: problem.theme,
+      title: problem.title,
+      studentAnswer,
+      correctAnswer,
+      isCorrect,
+      hintsUsed: hintsUsedCount,
+      score: isCorrect ? 100 : Math.round((Object.values(stepScores).filter(Boolean).length / 6) * 100),
+      stepScores,
+      needsPractice,
+    });
 
     navigate({ to: '/progress' });
   };
 
-  /** Ouvrir le panneau d'indices */
   const handleOpenHint = () => {
-    if (!hintOpen) {
-      // Ouvre le panneau — le niveau ne change pas (déjà vu = reste affiché)
-      setHintOpen(true);
-    }
+    if (!hintOpen) setHintOpen(true);
   };
 
-  /** Passer au niveau d'indice suivant */
   const handleNextHintLevel = () => {
     if (hintLevel < 3) {
-      const nextLevel = hintLevel + 1;
-      setHintLevel(nextLevel);
+      setHintLevel(hintLevel + 1);
       setHintsUsedCount(prev => prev + 1);
     }
   };
 
-  // Pour le bouton Indice : libellé selon l'état
   const hintButtonLabel = hintLevel >= 3 && hintOpen
     ? 'Tu as vu tous les indices'
     : hintOpen
@@ -164,8 +154,6 @@ export function SolvePage() {
     : `Revoir l'indice ${hintLevel}/3`;
 
   const progress = (currentStep / 6) * 100;
-
-  // Indices du problème (depuis problems.json ou AdminProblem)
   const problemHints = problem.hints ?? undefined;
 
   return (
@@ -177,28 +165,17 @@ export function SolvePage() {
               <Button variant="ghost" size="icon" asChild>
                 <Link to="/select"><Home className="h-5 w-5" /></Link>
               </Button>
-              <PageTitle className="text-lg md:text-xl truncate max-w-[200px] md:max-w-md">
-                {problem.title}
-              </PageTitle>
+              <PageTitle className="text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{problem.title}</PageTitle>
             </div>
             <div className="flex items-center gap-2">
-              {/* Bouton Indice — visible sauf à l'étape 1 */}
               {currentStep > 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenHint}
-                  disabled={hintLevel >= 3 && hintOpen}
-                  className="gap-2 border-yellow-300 text-yellow-800 hover:bg-yellow-50 hover:border-yellow-400 disabled:opacity-60"
-                >
+                <Button variant="outline" size="sm" onClick={handleOpenHint} disabled={hintLevel >= 3 && hintOpen} className="gap-2 border-yellow-300 text-yellow-800 hover:bg-yellow-50 hover:border-yellow-400 disabled:opacity-60">
                   <Lightbulb className="h-4 w-4" />
                   <span className="hidden sm:inline">{hintButtonLabel}</span>
                   <span className="sm:hidden">Indice</span>
                 </Button>
               )}
-              <div className="text-sm font-medium text-muted-foreground bg-secondary px-3 py-1 rounded-full whitespace-nowrap">
-                Étape {currentStep} sur 6
-              </div>
+              <div className="text-sm font-medium text-muted-foreground bg-secondary px-3 py-1 rounded-full whitespace-nowrap">Étape {currentStep} sur 6</div>
             </div>
           </div>
           <Progress value={progress} className="h-2" />
@@ -206,72 +183,37 @@ export function SolvePage() {
       </PageHeader>
 
       <PageBody className="pb-24 pt-6 max-w-4xl mx-auto w-full">
-        {/* Persistent problem banner — visible on all steps */}
         <ProblemBanner problem={problem} />
 
-        {/* Panneau d'indices — affiché sous le banner quand ouvert */}
         {hintOpen && (
           <div className="mb-6">
-            <HintPanel
-              currentStep={currentStep}
-              hintLevel={hintLevel}
-              hints={problemHints}
-              onNextLevel={handleNextHintLevel}
-              onClose={() => setHintOpen(false)}
-            />
+            <HintPanel currentStep={currentStep} hintLevel={hintLevel} hints={problemHints} onNextLevel={handleNextHintLevel} onClose={() => setHintOpen(false)} />
           </div>
         )}
 
         <div className="space-y-6 animate-fade-in" key={currentStep}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-              {currentStep}
-            </div>
+            <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">{currentStep}</div>
             <h2 className="text-xl font-bold">{STEPS[currentStep - 1].title}</h2>
           </div>
 
           <div className="min-h-[400px]">
-            {currentStep === 1 && (
-              <Step1Read problem={problem} onUpdate={(data) => updateAnswer(1, data)} savedData={answers[1]} />
-            )}
-            {currentStep === 2 && (
-              <Step2Question problem={problem} onUpdate={(data) => updateAnswer(2, data)} savedData={answers[2]} />
-            )}
-            {currentStep === 3 && (
-              <Step3Knowledge problem={problem} onUpdate={(data) => updateAnswer(3, data)} savedData={answers[3]} />
-            )}
-            {currentStep === 4 && (
-              <Step4Plan problem={problem} onUpdate={(data) => updateAnswer(4, data)} savedData={answers[4]} step3Data={answers[3]} />
-            )}
-            {currentStep === 5 && (
-              <Step5Solve problem={problem} onUpdate={(data) => updateAnswer(5, data)} savedData={answers[5]} planData={answers[4]} step3Data={answers[3]} />
-            )}
-            {currentStep === 6 && (
-              <Step6Answer problem={problem} onUpdate={(data) => updateAnswer(6, data)} savedData={answers[6]} />
-            )}
+            {currentStep === 1 && <Step1Read problem={problem} onUpdate={(data) => updateAnswer(1, data)} savedData={answers[1]} />}
+            {currentStep === 2 && <Step2Question problem={problem} onUpdate={(data) => updateAnswer(2, data)} savedData={answers[2]} />}
+            {currentStep === 3 && <Step3Knowledge problem={problem} onUpdate={(data) => updateAnswer(3, data)} savedData={answers[3]} />}
+            {currentStep === 4 && <Step4Plan problem={problem} onUpdate={(data) => updateAnswer(4, data)} savedData={answers[4]} step3Data={answers[3]} />}
+            {currentStep === 5 && <Step5Solve problem={problem} onUpdate={(data) => updateAnswer(5, data)} savedData={answers[5]} planData={answers[4]} step3Data={answers[3]} />}
+            {currentStep === 6 && <Step6Answer problem={problem} onUpdate={(data) => updateAnswer(6, data)} savedData={answers[6]} />}
           </div>
         </div>
 
-        {/* Navigation Floating Bar */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur border-t z-20 flex justify-center">
           <div className="max-w-4xl w-full flex justify-between gap-4">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 1}
-              className="gap-2"
-            >
-              <ChevronLeft className="h-4 w-4" /> Précédent
-            </Button>
-            
+            <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2"><ChevronLeft className="h-4 w-4" /> Précédent</Button>
             {currentStep === 6 ? (
-              <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={handleFinish}>
-                Terminer le problème <CheckCircle2 className="h-4 w-4" />
-              </Button>
+              <Button className="gap-2 bg-green-600 hover:bg-green-700 text-white" onClick={handleFinish}>Terminer le problème <CheckCircle2 className="h-4 w-4" /></Button>
             ) : (
-              <Button onClick={handleNext} className="gap-2 px-8">
-                Étape suivante <ChevronRight className="h-4 w-4" />
-              </Button>
+              <Button onClick={handleNext} className="gap-2 px-8">Étape suivante <ChevronRight className="h-4 w-4" /></Button>
             )}
           </div>
         </div>
