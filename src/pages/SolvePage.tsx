@@ -78,7 +78,7 @@ export function SolvePage() {
     if (currentStep < 6) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
-      setMarkMode(nextStep === 3 ? 'strike' : 'highlight');
+      setMarkMode('highlight');
       setHintOpen(false);
       window.scrollTo(0, 0);
     }
@@ -88,7 +88,7 @@ export function SolvePage() {
     if (currentStep > 1) {
       const nextStep = currentStep - 1;
       setCurrentStep(nextStep);
-      setMarkMode(nextStep === 3 ? 'strike' : 'highlight');
+      setMarkMode('highlight');
       setHintOpen(false);
       window.scrollTo(0, 0);
     }
@@ -99,6 +99,7 @@ export function SolvePage() {
   };
 
   const toggleHighlight = (tokenId: string) => {
+    setStrikethroughTokenIds(prev => prev.filter(id => id !== tokenId));
     setHighlightedTokenIds(prev =>
       prev.includes(tokenId)
         ? prev.filter(id => id !== tokenId)
@@ -107,6 +108,7 @@ export function SolvePage() {
   };
 
   const toggleStrikethrough = (tokenId: string) => {
+    setHighlightedTokenIds(prev => prev.filter(id => id !== tokenId));
     setStrikethroughTokenIds(prev =>
       prev.includes(tokenId)
         ? prev.filter(id => id !== tokenId)
@@ -212,6 +214,8 @@ export function SolvePage() {
           highlightedTokenIds={highlightedTokenIds}
           strikethroughTokenIds={strikethroughTokenIds}
           markMode={markMode}
+          showMarkTools={currentStep === 3}
+          onMarkModeChange={setMarkMode}
           onToggleHighlight={toggleHighlight}
           onToggleStrikethrough={currentStep === 3 ? toggleStrikethrough : undefined}
         />
