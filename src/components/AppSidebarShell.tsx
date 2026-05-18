@@ -2,9 +2,7 @@
  * Collapsible SaaS sidebar — expands to 15rem, collapses to 3rem (icon-only).
  * State is persisted to localStorage. Tooltips appear automatically when collapsed.
  *
- * NOTE: We bypass @blinkdotnew/ui <Sidebar> because it wraps all children in a
- * single overflow-y-auto div, making flex-1/shrink-0 on children no-ops.
- * This native flex-col implementation gives full layout control.
+ * Native flex-col implementation for full layout control.
  */
 import { useState, useCallback } from 'react'
 import type { ReactNode } from 'react'
@@ -16,7 +14,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@blinkdotnew/ui'
+} from '@/lib/ui'
 import {
   LayoutDashboard,
   Puzzle,
@@ -97,7 +95,6 @@ export function AppSidebarShell() {
           collapsed ? 'w-[3rem]' : 'w-[15rem]'
         )}
       >
-        {/* ── Header ────────────────────────────────────── */}
         <div
           className={cn(
             'flex items-center gap-2 shrink-0 border-b border-border h-[52px] px-3',
@@ -129,12 +126,11 @@ export function AppSidebarShell() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              {collapsed ? 'Déployer le menu' : 'Réduire le menu'}
             </TooltipContent>
           </Tooltip>
         </div>
 
-        {/* ── Nav (only this section scrolls) ───────────── */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-0.5">
           {!collapsed && (
             <p className="px-3 pt-1 pb-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -160,14 +156,12 @@ export function AppSidebarShell() {
           )}
         </div>
 
-        {/* ── Footer (always pinned to bottom) ──────────── */}
         <div
           className={cn(
             'shrink-0 border-t border-border',
             collapsed ? 'flex flex-col items-center gap-1 p-2' : 'p-3 space-y-1'
           )}
         >
-          {/* User row */}
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -193,7 +187,6 @@ export function AppSidebarShell() {
             </button>
           )}
 
-          {/* Sign out */}
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -206,7 +199,7 @@ export function AppSidebarShell() {
                   <LogOut className="h-4 w-4 shrink-0" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Sign out</TooltipContent>
+              <TooltipContent side="right">Déconnexion</TooltipContent>
             </Tooltip>
           ) : (
             <Button
@@ -216,7 +209,7 @@ export function AppSidebarShell() {
               className="w-full justify-start px-2 gap-2 text-muted-foreground hover:text-foreground"
             >
               <LogOut className="h-4 w-4 shrink-0" />
-              Sign out
+              Déconnexion
             </Button>
           )}
         </div>
