@@ -34,9 +34,30 @@ function getHighlightedContentTokens(content: string, highlightedTokenIds: strin
     .map(({ token }) => token);
 }
 
+function normalizeText(value: unknown) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isProbabilityProblem(problem: any) {
+  const fieldsToCheck = [
+    problem?.mathDomain,
+    problem?.mainConcept,
+    problem?.subConcept,
+    problem?.theme,
+    problem?.title,
+    problem?.question,
+  ];
+
+  return fieldsToCheck.some(field => normalizeText(field).includes('probabil'));
+}
+
 export function Step2Question({ problem, onUpdate, savedData, highlightedTokenIds = [] }: Step2QuestionProps) {
   const [answer, setAnswer] = useState(savedData?.answer || '');
   const highlightedContentTokens = getHighlightedContentTokens(problem.content || '', highlightedTokenIds);
+  const showProbabilityStarter = isProbabilityProblem(problem);
 
   const handleAnswerChange = (val: string) => {
     setAnswer(val);
@@ -61,6 +82,9 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
             <li className="leading-snug">• Je cherche combien...</li>
             <li className="leading-snug">• Je cherche le nombre de...</li>
             <li className="leading-snug">• Je cherche le total de...</li>
+            {showProbabilityStarter && (
+              <li className="leading-snug">• Je cherche ce qui est le plus probable.</li>
+            )}
           </ul>
         </div>
 
