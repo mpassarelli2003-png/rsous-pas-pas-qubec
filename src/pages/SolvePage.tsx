@@ -164,7 +164,7 @@ export function SolvePage() {
 
   const progress = (currentStep / 6) * 100;
   const problemHints = problem.hints ?? undefined;
-  const bodyWidthClass = currentStep <= 2 ? 'max-w-6xl' : 'max-w-4xl';
+  const bodyWidthClass = 'max-w-6xl';
 
   return (
     <Page>
