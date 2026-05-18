@@ -12,6 +12,8 @@ interface ProblemBannerProps {
   highlightedTokenIds?: string[];
   strikethroughTokenIds?: string[];
   markMode?: 'highlight' | 'strike';
+  showMarkTools?: boolean;
+  onMarkModeChange?: (mode: 'highlight' | 'strike') => void;
   onToggleHighlight?: (tokenId: string) => void;
   onToggleStrikethrough?: (tokenId: string) => void;
 }
@@ -29,6 +31,8 @@ export function ProblemBanner({
   highlightedTokenIds = [],
   strikethroughTokenIds = [],
   markMode = 'highlight',
+  showMarkTools = false,
+  onMarkModeChange,
   onToggleHighlight,
   onToggleStrikethrough,
 }: ProblemBannerProps) {
@@ -162,16 +166,51 @@ export function ProblemBanner({
           style={{ fontSize: `${fontSize}px`, lineHeight: 1.65 }}
         >
           {(onToggleHighlight || onToggleStrikethrough) && (
-            <p className={cn(
-              'inline-flex rounded-lg px-3 py-1 text-xs font-medium border',
-              markMode === 'strike'
-                ? 'bg-slate-50 text-slate-700 border-slate-200'
-                : 'bg-yellow-50 text-yellow-900 border-yellow-200'
-            )}>
-              {markMode === 'strike'
-                ? 'Mode rayer : clique sur les informations inutiles.'
-                : 'Clique sur les nombres, les mots importants ou la question pour les surligner.'}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {showMarkTools ? (
+                <div className="inline-flex items-center gap-1 rounded-lg border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-900">
+                  <span className="mr-1">Outil :</span>
+                  <button
+                    type="button"
+                    onClick={() => onMarkModeChange?.('highlight')}
+                    className={cn(
+                      'rounded-md px-2 py-1 transition-colors',
+                      markMode === 'highlight' ? 'bg-yellow-200 text-yellow-950 shadow-sm' : 'hover:bg-yellow-100'
+                    )}
+                    aria-pressed={markMode === 'highlight'}
+                  >
+                    Surligner utile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMarkModeChange?.('strike')}
+                    className={cn(
+                      'rounded-md px-2 py-1 transition-colors',
+                      markMode === 'strike' ? 'bg-slate-200 text-slate-800 shadow-sm' : 'hover:bg-yellow-100'
+                    )}
+                    aria-pressed={markMode === 'strike'}
+                  >
+                    Rayer inutile
+                  </button>
+                </div>
+              ) : (
+                <p className="inline-flex rounded-lg bg-yellow-50 px-3 py-1 text-xs font-medium text-yellow-900 border border-yellow-200">
+                  Clique sur les nombres, les mots importants ou la question pour les surligner.
+                </p>
+              )}
+              {showMarkTools && (
+                <p className={cn(
+                  'inline-flex rounded-lg px-3 py-1 text-xs font-medium border',
+                  markMode === 'strike'
+                    ? 'bg-slate-50 text-slate-700 border-slate-200'
+                    : 'bg-yellow-50 text-yellow-900 border-yellow-200'
+                )}>
+                  {markMode === 'strike'
+                    ? 'Clique pour rayer les informations inutiles.'
+                    : 'Clique pour surligner ou désurligner les informations utiles.'}
+                </p>
+              )}
+            </div>
           )}
           <p className="text-foreground leading-relaxed">{renderHighlightableText(problem.content, 'content')}</p>
           <div className="flex items-start gap-2 pt-2 border-t border-primary/10">
