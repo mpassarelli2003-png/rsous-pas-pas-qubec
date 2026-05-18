@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Card, Button, Textarea, Badge } from '@blinkdotnew/ui';
-import { HelpCircle, Search } from 'lucide-react';
+import { Textarea, Badge } from '@blinkdotnew/ui';
+import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HintPanel } from './HintPanel';
 
 interface Step2QuestionProps {
   problem: any;
@@ -12,89 +11,63 @@ interface Step2QuestionProps {
 
 export function Step2Question({ problem, onUpdate, savedData }: Step2QuestionProps) {
   const [answer, setAnswer] = useState(savedData?.answer || '');
-  const [showHint, setShowHint] = useState(false);
-  const [hintLevel, setHintLevel] = useState(1);
 
   const handleAnswerChange = (val: string) => {
     setAnswer(val);
     onUpdate({ answer: val });
   };
 
-  const handleHintButtonClick = () => {
-    setShowHint(true);
-  };
-
-  const handleNextHintLevel = () => {
-    setHintLevel(prev => Math.min(prev + 1, 3));
-  };
-
-  const handleCloseHint = () => {
-    setShowHint(false);
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center py-4">
-        <h3 className="text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
-        <p className="text-muted-foreground">Identifie la question ou l'ordre donné dans le problème.</p>
-      </div>
+    <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
+      {/* ── Colonne gauche fixe : aide compacte, même esprit que l'étape 1 ── */}
+      <aside className="w-full lg:sticky lg:top-28 lg:self-start rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm z-[1]">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
+          <Search className="h-4 w-4 shrink-0" />
+          Aide-mémoire
+        </p>
 
-      <Card className="p-6 border-2 border-primary/20 bg-white">
-        <div className="space-y-4">
-          <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ta réponse :</label>
-          <Textarea
-            placeholder="Exemple: Je cherche le prix total des billets..."
-            className="min-h-[120px] text-lg resize-none border-2 focus:border-primary"
-            value={answer}
-            onChange={(e) => handleAnswerChange(e.target.value)}
-          />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground italic">
-              Conseil : Commence ta phrase par "Je cherche…"
-            </p>
-            <Badge variant="outline" className="bg-primary/5">
-              {answer.length > 5 ? 'Bravo !' : 'Continue d\'écrire...'}
-            </Badge>
+        <p className="text-sm font-bold text-blue-950 leading-snug mb-2">
+          Débuts de phrases
+        </p>
+
+        <ul className="space-y-2 text-sm text-blue-950">
+          <li className="leading-snug">• Je cherche combien...</li>
+          <li className="leading-snug">• Je cherche le nombre de...</li>
+          <li className="leading-snug">• Je cherche le total de...</li>
+        </ul>
+      </aside>
+
+      {/* ── Zone principale : consigne + réponse ── */}
+      <div className="min-w-0 space-y-3">
+        <div className="space-y-1 text-center py-1">
+          <h3 className="text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
+          <p className="text-sm text-muted-foreground">Écris ce que la question te demande de trouver.</p>
+        </div>
+
+        <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
+          <div className="space-y-3">
+            <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ta réponse :</label>
+            <Textarea
+              placeholder="Exemple : Je cherche le nombre de caisses..."
+              className="min-h-[92px] text-base md:text-lg resize-none border-2 focus:border-primary"
+              value={answer}
+              onChange={(e) => handleAnswerChange(e.target.value)}
+            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+              <p className="text-xs text-muted-foreground italic">
+                Tu dis ce qu'on cherche, pas encore le calcul.
+              </p>
+              <Badge
+                variant="outline"
+                className={cn(
+                  'w-fit',
+                  answer.length > 5 ? 'bg-green-50 text-green-800 border-green-200' : 'bg-primary/5'
+                )}
+              >
+                {answer.length > 5 ? 'Bonne voie' : 'Continue d’écrire...'}
+              </Badge>
+            </div>
           </div>
-        </div>
-      </Card>
-
-      {/* Bouton d'indice + panneau */}
-      <div className="space-y-3">
-        <Button
-          variant="ghost"
-          onClick={handleHintButtonClick}
-          className="gap-2 text-yellow-700 hover:text-yellow-800 hover:bg-yellow-50"
-        >
-          <HelpCircle className="h-4 w-4" />
-          Besoin d'un indice ?
-        </Button>
-
-        {showHint && (
-          <HintPanel
-            currentStep={2}
-            hintLevel={hintLevel}
-            onNextLevel={handleNextHintLevel}
-            onClose={handleCloseHint}
-          />
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 pt-6">
-        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-          <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
-            <Search className="h-4 w-4" /> Exemples de phrases
-          </h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Je cherche le prix total.</li>
-            <li>• Je cherche combien il reste de pommes.</li>
-            <li>• Je cherche combien chaque personne reçoit.</li>
-          </ul>
-        </div>
-        <div className="p-4 bg-green-50 border border-green-100 rounded-xl flex items-center">
-          <p className="text-sm text-green-800 italic">
-            "Si la réponse contient l'idée principale de la question, félicitations ! Tu es sur la bonne voie."
-          </p>
         </div>
       </div>
     </div>
