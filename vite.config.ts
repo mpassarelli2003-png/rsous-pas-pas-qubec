@@ -7,7 +7,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
-      '@blinkdotnew/ui': path.resolve(import.meta.dirname, './src/lib/blink-ui-shim.tsx'),
     },
   },
   server: {
