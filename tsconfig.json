@@ -30,9 +30,10 @@
     "allowUnusedLabels": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@blinkdotnew/ui": ["./src/lib/blink-ui-shim.tsx"]
     }
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
-} 
+}
