@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export interface PlanRow {
   action: string;
   operation: string;
-  why: string;
+  why?: string;
 }
 
 interface PlanTableProps {
@@ -46,8 +46,6 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
               <th className="px-4 py-3 text-left font-bold whitespace-nowrap w-20">Étape</th>
               <th className="px-4 py-3 text-left font-bold">Ce que je dois faire</th>
               <th className="px-4 py-3 text-left font-bold whitespace-nowrap w-44">Opération prévue</th>
-              <th className="px-4 py-3 text-left font-bold">Pourquoi je fais cette étape&nbsp;?</th>
-              {/* Colonne suppression — uniquement en mode édition avec onDeleteRow */}
               {!readOnly && onDeleteRow && (
                 <th className="px-2 py-3 w-10" />
               )}
@@ -62,14 +60,12 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                   i % 2 === 0 ? 'bg-white' : 'bg-primary/3'
                 )}
               >
-                {/* Étape label */}
                 <td className="px-4 py-3">
                   <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center">
                     {i + 1}
                   </div>
                 </td>
 
-                {/* Action */}
                 <td className="px-4 py-3">
                   {readOnly ? (
                     <p className={cn('text-sm', !row.action && 'text-muted-foreground italic')}>
@@ -85,7 +81,6 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                   )}
                 </td>
 
-                {/* Opération */}
                 <td className="px-4 py-3">
                   {readOnly ? (
                     <span className={cn(
@@ -108,23 +103,6 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                   )}
                 </td>
 
-                {/* Pourquoi */}
-                <td className="px-4 py-3">
-                  {readOnly ? (
-                    <p className={cn('text-sm', !row.why && 'text-muted-foreground italic')}>
-                      {row.why || '—'}
-                    </p>
-                  ) : (
-                    <Input
-                      value={row.why}
-                      onChange={e => update(i, 'why', e.target.value)}
-                      placeholder="Ex: Pour trouver le montant total"
-                      className="border-primary/20 focus:border-primary text-sm h-9"
-                    />
-                  )}
-                </td>
-
-                {/* Bouton suppression */}
                 {!readOnly && onDeleteRow && (
                   <td className="px-2 py-3">
                     <button
@@ -148,7 +126,6 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
         </table>
       </div>
 
-      {/* Bouton ajouter une étape — uniquement en mode édition */}
       {!readOnly && onAddRow && (
         <Button
           variant="outline"
@@ -165,5 +142,5 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
 
 /** Crée un tableau vide avec n lignes */
 export function emptyPlanRows(n: number): PlanRow[] {
-  return Array.from({ length: n }, () => ({ action: '', operation: '', why: '' }));
+  return Array.from({ length: n }, () => ({ action: '', operation: '' }));
 }
