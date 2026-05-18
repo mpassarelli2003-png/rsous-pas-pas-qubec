@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Textarea } from '@blinkdotnew/ui';
+import { Card, Button, Textarea } from '@/lib/ui';
 import { RotateCcw, HelpCircle, ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import { PlanTable, PlanRow } from './PlanTable';
 import { HintPanel } from './HintPanel';

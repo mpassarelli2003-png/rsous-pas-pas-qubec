@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Textarea, Badge } from '@blinkdotnew/ui';
+import { Card, Button, Textarea, Badge } from '@/lib/ui';
 import { MessageSquare, CheckCircle2, Lightbulb, Search, BookOpen, ChevronDown, ChevronUp, AlertCircle, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

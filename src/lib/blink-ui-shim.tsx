@@ -8,6 +8,85 @@ export function BlinkUIProvider({ children }: { children: React.ReactNode; theme
   return <>{children}</>;
 }
 
+type AppShellContextValue = {
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const AppShellContext = createContext<AppShellContextValue | null>(null);
+
+function useAppShellContext() {
+  const context = useContext(AppShellContext);
+  if (!context) {
+    throw new Error('AppShell components must be used within <AppShell>.');
+  }
+  return context;
+}
+
+export function AppShell({ className, children, ...props }: AnyProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  return (
+    <AppShellContext.Provider value={{ mobileSidebarOpen, setMobileSidebarOpen }}>
+      <div className={cn('flex min-h-screen bg-background text-foreground', className)} {...props}>
+        {children}
+      </div>
+    </AppShellContext.Provider>
+  );
+}
+
+export function AppShellSidebar({ className, children, ...props }: AnyProps) {
+  const { mobileSidebarOpen, setMobileSidebarOpen } = useAppShellContext();
+
+  return (
+    <>
+      <aside className={cn('hidden min-h-screen md:block', className)} {...props}>
+        {children}
+      </aside>
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
+          <button
+            type="button"
+            aria-label="Fermer le menu"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setMobileSidebarOpen(false)}
+          />
+          <aside className={cn('relative z-10 h-full w-[15rem] max-w-[85vw] bg-background shadow-xl', className)} {...props}>
+            {children}
+          </aside>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function AppShellMain({ className, children, ...props }: AnyProps) {
+  return (
+    <main className={cn('min-w-0 flex-1', className)} {...props}>
+      {children}
+    </main>
+  );
+}
+
+export function MobileSidebarTrigger({ className, children, onClick, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const { setMobileSidebarOpen } = useAppShellContext();
+
+  return (
+    <button
+      type="button"
+      aria-label="Ouvrir le menu"
+      className={cn('inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground', className)}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) setMobileSidebarOpen(true);
+      }}
+      {...props}
+    >
+      {children ?? <span aria-hidden="true" className="text-lg leading-none">☰</span>}
+    </button>
+  );
+}
+
 export function Page({ className, children, ...props }: AnyProps) {
   return <main className={cn('min-h-screen bg-background text-foreground', className)} {...props}>{children}</main>;
 }
@@ -201,8 +280,9 @@ function extractSelectItems(children: React.ReactNode): React.ReactElement<any>[
   const items: React.ReactElement<any>[] = [];
   React.Children.forEach(children, child => {
     if (!React.isValidElement(child)) return;
-    if ('value' in child.props) { items.push(child as React.ReactElement<any>); return; }
-    if (child.props?.children) items.push(...extractSelectItems(child.props.children));
+    const item = child as React.ReactElement<any>;
+    if ('value' in item.props) { items.push(item); return; }
+    if (item.props?.children) items.push(...extractSelectItems(item.props.children));
   });
   return items;
 }

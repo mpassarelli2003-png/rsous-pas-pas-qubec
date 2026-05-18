@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Textarea } from '@blinkdotnew/ui';
+import { Card, Button, Textarea } from '@/lib/ui';
 import { ListTodo, Layout, Table as TableIcon, HelpCircle, Coins, Clock, Square, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HintPanel } from './HintPanel';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@blinkdotnew/ui';
+import { Card, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/ui';
 import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';

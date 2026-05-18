@@ -3,7 +3,7 @@
  * Conçu pour tablette, Chromebook et écran tactile. Gros boutons, interface simple.
  */
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Button } from '@blinkdotnew/ui';
+import { Button } from '@/lib/ui';
 import { Pen, Highlighter, Eraser, Undo2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

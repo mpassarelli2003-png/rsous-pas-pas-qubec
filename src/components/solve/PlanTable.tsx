@@ -2,7 +2,7 @@
  * PlanTable — Tableau de planification des étapes de calcul.
  * Affiché à l'étape 4B pour planifier, et en lecture seule à l'étape 5 comme rappel.
  */
-import { Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@blinkdotnew/ui';
+import { Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/ui';
 import { Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
