@@ -168,14 +168,16 @@ export function ProblemBanner({
           {(onToggleHighlight || onToggleStrikethrough) && (
             <div className="flex flex-wrap items-center gap-2">
               {showMarkTools ? (
-                <div className="inline-flex items-center gap-1 rounded-lg border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-900">
-                  <span className="mr-1">Outil :</span>
+                <div className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                  <span className="mr-1 font-bold uppercase tracking-wider text-slate-500">Outil de tri</span>
                   <button
                     type="button"
                     onClick={() => onMarkModeChange?.('highlight')}
                     className={cn(
-                      'rounded-md px-2 py-1 transition-colors',
-                      markMode === 'highlight' ? 'bg-yellow-200 text-yellow-950 shadow-sm' : 'hover:bg-yellow-100'
+                      'rounded-lg border px-3 py-1 font-semibold transition-colors',
+                      markMode === 'highlight'
+                        ? 'border-yellow-400 bg-yellow-200 text-yellow-950 shadow-sm ring-2 ring-yellow-300/50'
+                        : 'border-yellow-200 bg-yellow-50 text-yellow-800 hover:bg-yellow-100'
                     )}
                     aria-pressed={markMode === 'highlight'}
                   >
@@ -185,8 +187,10 @@ export function ProblemBanner({
                     type="button"
                     onClick={() => onMarkModeChange?.('strike')}
                     className={cn(
-                      'rounded-md px-2 py-1 transition-colors',
-                      markMode === 'strike' ? 'bg-slate-200 text-slate-800 shadow-sm' : 'hover:bg-yellow-100'
+                      'rounded-lg border px-3 py-1 font-semibold transition-colors',
+                      markMode === 'strike'
+                        ? 'border-slate-500 bg-slate-700 text-white shadow-sm ring-2 ring-slate-300'
+                        : 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100'
                     )}
                     aria-pressed={markMode === 'strike'}
                   >
