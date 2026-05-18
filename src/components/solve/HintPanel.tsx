@@ -3,7 +3,7 @@
  * Affiche les 3 indices du problème un à la fois, avec un rappel de l'étape actuelle.
  * Les indices sont identiques pour toutes les étapes — seul le rappel contextuel change.
  */
-import { Button } from '@blinkdotnew/ui';
+import { Button } from '@/lib/ui';
 import { X, ChevronRight } from 'lucide-react';
 
 interface ProblemHints {
