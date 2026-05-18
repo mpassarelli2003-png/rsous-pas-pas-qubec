@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Page, PageBody, PageHeader, PageTitle, Card, Button, Badge } from '@blinkdotnew/ui';
+import { Page, PageBody, PageHeader, PageTitle, Card, Button, Badge } from '@/lib/ui';
 import { Link } from '@tanstack/react-router';
 import { BookOpen, GraduationCap, Trophy, ChevronRight, Zap, SlidersHorizontal } from 'lucide-react';
 import problemsData from '../data/problems.json';
