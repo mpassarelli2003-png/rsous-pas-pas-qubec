@@ -88,21 +88,21 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
 
       {/* ── Zone principale : consigne + réponse ── */}
       <div className="min-w-0">
-        <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
-          <div className="space-y-3">
-            <div className="space-y-1 text-center">
-              <h3 className="text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
+        <div className="rounded-xl border-2 border-primary/20 bg-white px-4 py-3 shadow-sm">
+          <div className="space-y-2">
+            <div className="space-y-0.5 text-center">
+              <h3 className="text-xl md:text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
               <p className="text-sm text-muted-foreground">Écris ce que la question te demande de trouver.</p>
             </div>
 
             <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ta réponse :</label>
             <Textarea
               placeholder="Exemple : Je cherche le nombre de caisses..."
-              className="min-h-[72px] text-base md:text-lg resize-none border-2 focus:border-primary"
+              className="min-h-[64px] text-base md:text-lg resize-none border-2 focus:border-primary"
               value={answer}
               onChange={(e) => handleAnswerChange(e.target.value)}
             />
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
               <p className="text-xs text-muted-foreground italic">
                 Tu dis ce qu'on cherche, pas encore le calcul.
               </p>
