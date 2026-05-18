@@ -87,18 +87,18 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
       </aside>
 
       {/* ── Zone principale : consigne + réponse ── */}
-      <div className="min-w-0 space-y-3">
-        <div className="space-y-1 text-center py-1">
-          <h3 className="text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
-          <p className="text-sm text-muted-foreground">Écris ce que la question te demande de trouver.</p>
-        </div>
-
+      <div className="min-w-0">
         <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
           <div className="space-y-3">
+            <div className="space-y-1 text-center">
+              <h3 className="text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
+              <p className="text-sm text-muted-foreground">Écris ce que la question te demande de trouver.</p>
+            </div>
+
             <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ta réponse :</label>
             <Textarea
               placeholder="Exemple : Je cherche le nombre de caisses..."
-              className="min-h-[88px] text-base md:text-lg resize-none border-2 focus:border-primary"
+              className="min-h-[72px] text-base md:text-lg resize-none border-2 focus:border-primary"
               value={answer}
               onChange={(e) => handleAnswerChange(e.target.value)}
             />
