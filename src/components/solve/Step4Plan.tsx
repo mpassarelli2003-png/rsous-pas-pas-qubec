@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Card, Button, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, BookOpen, Highlighter, Route } from 'lucide-react';
+import { Card, Button, Input } from '@/lib/ui';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, Highlighter, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
 
@@ -92,7 +92,7 @@ function extractImportantItems(text: string): string[] {
 export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4PlanProps) {
   const [selectedOps, setSelectedOps] = useState<string[]>(savedData?.selectedOps || []);
   const [estimation, setEstimation] = useState(savedData?.estimation || '');
-  const [whyOps, setWhyOps] = useState<Record<string, string>>(savedData?.whyOps || {});
+  const [whyOps] = useState<Record<string, string>>(savedData?.whyOps || {});
   const [planRows, setPlanRows] = useState<PlanRow[]>(
     savedData?.planRows || emptyPlanRows(1)
   );
@@ -116,14 +116,8 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
     pushUpdate({ selectedOps: next });
   };
 
-  const updateWhyOp = (opId: string, value: string) => {
-    const next = { ...whyOps, [opId]: value };
-    setWhyOps(next);
-    pushUpdate({ whyOps: next });
-  };
-
   const handleAddRow = () => {
-    const next = [...planRows, { action: '', operation: '', why: '' }];
+    const next = [...planRows, { action: '', operation: '' }];
     setPlanRows(next);
     pushUpdate({ planRows: next });
   };
@@ -140,10 +134,8 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
     pushUpdate({ planRows: rows });
   };
 
-  // Texte noté par l'élève à l'étape 3
   const importantFromStep3 = step3Data?.important?.trim();
   const importantItems = extractImportantItems(step3Data?.important ?? '');
-  // Nombres repérés dans les données importantes
   const step3Numbers = extractNumbers(step3Data?.important ?? '');
 
   return (
@@ -208,19 +200,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             </div>
           )}
         </div>
-
-        <div className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
-            <Calculator className="h-4 w-4 shrink-0" />
-            Indices d’opération
-          </p>
-          <div className="space-y-2 text-sm text-slate-700 leading-snug">
-            <p><strong className="text-blue-700">en tout</strong> → +</p>
-            <p><strong className="text-red-700">reste</strong> → −</p>
-            <p><strong className="text-orange-700">groupes de</strong> → ×</p>
-            <p><strong className="text-purple-700">partager</strong> → ÷</p>
-          </div>
-        </div>
       </aside>
 
       {/* ── Zone principale : 4A, 4B, 4C, plan final ── */}
@@ -238,7 +217,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             </p>
           </div>
 
-          {/* Liste verticale compacte — une ligne par opération */}
           <div className="space-y-2">
             {OPERATIONS.map(op => {
               const selected = selectedOps.includes(op.id);
@@ -257,7 +235,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                   )}
                 >
-                  {/* Case à cocher + symbole */}
                   <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
                     <div className={cn(
                       'h-5 w-5 rounded border-2 flex items-center justify-center transition-colors',
@@ -277,7 +254,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                     </span>
                   </div>
 
-                  {/* Nom + définition + mots-clés */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <p className={cn(
                       'font-bold text-sm leading-tight',
@@ -331,7 +307,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             />
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 flex gap-2">
               <span className="font-bold shrink-0">💡</span>
-              <span>Exemple : Étape 1 — calculer le rabais (×) — pour trouver combien je sauve.</span>
+              <span>Exemple : Étape 1 — calculer le rabais (×).</span>
             </div>
           </div>
         </section>
