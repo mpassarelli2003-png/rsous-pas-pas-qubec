@@ -27,6 +27,7 @@ const OPERATIONS = [
     definition: "Je l’utilise quand je cherche un total ou quand j’ajoute des quantités.",
     keywords: ['total', 'en tout'],
     moreKeywords: ['somme', 'plus', 'ajouter', 'réunir'],
+    starters: ['J’ajoute', 'Je regroupe', 'Je calcule', 'Je trouve', 'Je vérifie'],
   },
   {
     id: 'soustraction',
@@ -41,6 +42,7 @@ const OPERATIONS = [
     definition: "Je l’utilise quand je cherche ce qui reste, ce qui manque ou la différence.",
     keywords: ['reste', 'différence'],
     moreKeywords: ['manque', 'écart', 'de moins', 'enlever'],
+    starters: ['J’enlève', 'Je compare', 'Je cherche', 'Je trouve', 'Je vérifie'],
   },
   {
     id: 'multiplication',
@@ -55,6 +57,7 @@ const OPERATIONS = [
     definition: 'Je l’utilise quand le même groupe se répète plusieurs fois.',
     keywords: ['groupes', 'chaque'],
     moreKeywords: ['fois', 'par', 'produit', 'double'],
+    starters: ['Je multiplie', 'Je regroupe', 'Je calcule', 'Je trouve', 'Je vérifie'],
   },
   {
     id: 'division',
@@ -69,6 +72,7 @@ const OPERATIONS = [
     definition: "Je l’utilise quand je partage également ou quand je cherche combien il y a dans chaque groupe.",
     keywords: ['partager', 'chacun'],
     moreKeywords: ['par équipe', 'moyenne', 'quotient', 'moitié'],
+    starters: ['Je partage', 'Je divise', 'Je cherche', 'Je trouve', 'Je vérifie'],
   },
 ];
 
@@ -373,6 +377,12 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                           <span key={k} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{k}</span>
                         ))}
                       </div>
+                      <p className="font-bold text-slate-900 mt-3 mb-1">Débuts de phrase</p>
+                      <div className="flex flex-wrap gap-1">
+                        {op.starters.map(starter => (
+                          <span key={starter} className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-800">{starter}</span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -394,10 +404,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
 
           <div className="space-y-4 animate-fade-in">
             <PlanTable rows={planRows} onChange={handlePlanRowsChange} onAddRow={handleAddRow} onDeleteRow={handleDeleteRow} />
-            <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 flex gap-2">
-              <span className="font-bold shrink-0">💡</span>
-              <span>Exemple : Étape 1 — calculer le rabais (×).</span>
-            </div>
           </div>
         </section>
 
