@@ -18,7 +18,7 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8 items-start">
+    <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8 items-start">
       {/* ── Colonne gauche fixe : Aide-mémoire de lecture ── */}
       <aside className="w-full lg:sticky lg:top-28 lg:self-start rounded-2xl border-2 border-blue-300 bg-blue-50 p-5 shadow-sm z-[1]">
         <p className="text-xs font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-4">
@@ -56,13 +56,16 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
         </div>
       </aside>
 
-      {/* ── Zone principale : citation + cases à cocher + message ── */}
-      <div className="min-w-0 space-y-6">
-        <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 text-sm italic text-primary/80">
-          "Lis le problème une première fois pour comprendre l'histoire. Relis ensuite pour trouver ce qu'on te demande."
+      {/* ── Zone principale : rappel compact + cases à cocher + message ── */}
+      <div className="min-w-0 space-y-4">
+        <div className="inline-flex w-full items-start gap-2 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 text-sm font-medium text-blue-900">
+          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">!</span>
+          <p className="leading-relaxed">
+            Lis une fois pour comprendre l’histoire, puis relis pour trouver la question.
+          </p>
         </div>
 
-        <div className="space-y-4 pt-2 border-t border-dashed">
+        <div className="space-y-3 pt-1 border-t border-dashed">
           <h3 className="font-semibold text-muted-foreground flex items-center gap-2">
             <CheckCircleIcon /> Ma progression de lecture
           </h3>
@@ -83,7 +86,7 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
         </div>
 
         <div className={cn(
-          'rounded-xl p-4 border-2 text-sm font-medium transition-all',
+          'rounded-xl p-3 border-2 text-sm font-medium transition-all',
           readCount.read1 && readCount.read2
             ? 'bg-green-50 border-green-300 text-green-800'
             : 'bg-secondary/30 border-secondary text-muted-foreground'
