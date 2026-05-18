@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, Highlighter, Route, HelpCircle } from 'lucide-react';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Highlighter, Route, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
 
@@ -22,8 +22,10 @@ const OPERATIONS = [
     light: 'bg-blue-50',
     border: 'border-blue-300',
     ring: 'ring-blue-400',
-    definition: "J'additionne quand j'ajoute des quantités ou quand je cherche un total.",
-    keywords: ['somme', 'total', 'en tout', 'plus'],
+    text: 'Je cherche un total.',
+    definition: "Je l’utilise quand je cherche un total ou quand j’ajoute des quantités.",
+    keywords: ['total', 'en tout'],
+    moreKeywords: ['somme', 'plus', 'ajouter', 'réunir'],
   },
   {
     id: 'soustraction',
@@ -34,8 +36,10 @@ const OPERATIONS = [
     light: 'bg-red-50',
     border: 'border-red-300',
     ring: 'ring-red-400',
-    definition: "Je soustrais quand j'enlève une quantité, quand je compare ou quand je cherche ce qui reste.",
-    keywords: ['reste', 'différence', 'de moins', 'écart'],
+    text: 'Je cherche ce qui reste.',
+    definition: "Je l’utilise quand je cherche ce qui reste, ce qui manque ou la différence.",
+    keywords: ['reste', 'différence'],
+    moreKeywords: ['manque', 'écart', 'de moins', 'enlever'],
   },
   {
     id: 'multiplication',
@@ -46,8 +50,10 @@ const OPERATIONS = [
     light: 'bg-orange-50',
     border: 'border-orange-300',
     ring: 'ring-orange-400',
-    definition: 'Je multiplie quand le même groupe se répète plusieurs fois.',
-    keywords: ['fois', 'chaque', 'groupes égaux', 'produit'],
+    text: 'Des groupes égaux.',
+    definition: 'Je l’utilise quand le même groupe se répète plusieurs fois.',
+    keywords: ['groupes', 'chaque'],
+    moreKeywords: ['fois', 'par', 'produit', 'double'],
   },
   {
     id: 'division',
@@ -58,8 +64,10 @@ const OPERATIONS = [
     light: 'bg-purple-50',
     border: 'border-purple-300',
     ring: 'ring-purple-400',
-    definition: "Je divise quand je partage également ou quand je cherche combien il y a dans chaque groupe.",
-    keywords: ['partager', 'chacun', 'par équipe', 'quotient'],
+    text: 'Je partage également.',
+    definition: "Je l’utilise quand je partage également ou quand je cherche combien il y a dans chaque groupe.",
+    keywords: ['partager', 'chacun'],
+    moreKeywords: ['par équipe', 'moyenne', 'quotient', 'moitié'],
   },
 ];
 
@@ -155,12 +163,11 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const [selectedOps, setSelectedOps] = useState<string[]>(savedData?.selectedOps || []);
   const [estimation, setEstimation] = useState(savedData?.estimation || '');
   const [whyOps] = useState<Record<string, string>>(savedData?.whyOps || {});
-  const [planRows, setPlanRows] = useState<PlanRow[]>(
-    savedData?.planRows || emptyPlanRows(1)
-  );
+  const [planRows, setPlanRows] = useState<PlanRow[]>(savedData?.planRows || emptyPlanRows(1));
   const [easyNumbers, setEasyNumbers] = useState<Record<string, string>>(savedData?.easyNumbers || {});
   const [quickCalculation, setQuickCalculation] = useState(savedData?.quickCalculation || '');
   const [showEstimationHelp, setShowEstimationHelp] = useState(false);
+  const [openOperationHelp, setOpenOperationHelp] = useState<string | null>(null);
 
   const pushUpdate = (patch: any) => {
     onUpdate({
@@ -261,7 +268,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
         </div>
       </aside>
 
-      <div className="min-w-0 space-y-12">
+      <div className="min-w-0 space-y-10">
         <section className="space-y-4">
           <div className="space-y-1">
             <h3 className="text-xl font-bold flex items-center gap-2">
@@ -269,48 +276,68 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
               4A. Je choisis les opérations utiles
             </h3>
             <p className="text-muted-foreground text-sm italic">
-              Coche l'opération ou les opérations dont tu auras besoin.
+              Coche l'opération ou les opérations dont tu auras besoin. Clique sur ? pour un rappel.
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {OPERATIONS.map(op => {
               const selected = selectedOps.includes(op.id);
+              const helpOpen = openOperationHelp === op.id;
               return (
                 <div
                   key={op.id}
-                  onClick={() => toggleOp(op.id)}
-                  role="checkbox"
-                  aria-checked={selected}
-                  tabIndex={0}
-                  onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleOp(op.id); } }}
                   className={cn(
-                    'cursor-pointer rounded-xl border-2 p-3 flex items-start gap-3 transition-all select-none',
-                    selected ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring) : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                    'relative rounded-xl border-2 bg-white transition-all',
+                    selected ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                   )}
                 >
-                  <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                    <div className={cn('h-5 w-5 rounded border-2 flex items-center justify-center transition-colors', selected ? cn(op.color, 'border-transparent') : 'border-slate-300 bg-white')}>
-                      {selected && (
-                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 12 12">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
-                    <span className={cn('text-lg font-black leading-none', selected ? 'text-slate-700' : 'text-slate-400')}>{op.symbol}</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleOp(op.id)}
+                    role="checkbox"
+                    aria-checked={selected}
+                    className="w-full min-h-[76px] p-3 text-left flex items-center gap-3"
+                  >
+                    <span className={cn('h-8 w-8 rounded-lg flex items-center justify-center text-lg font-black text-white shrink-0', selected ? op.color : 'bg-slate-400')}>
+                      {selected ? '✓' : op.symbol}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold text-slate-900 leading-tight">{op.label}</span>
+                      <span className="block text-sm text-slate-600 leading-snug">{op.text}</span>
+                      <span className="mt-1 flex flex-wrap gap-1">
+                        {op.keywords.map(k => (
+                          <span key={k} className="rounded-md border border-slate-200 bg-white/80 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">{k}</span>
+                        ))}
+                      </span>
+                    </span>
+                  </button>
 
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className={cn('font-bold text-sm leading-tight', selected ? 'text-slate-900' : 'text-slate-600')}>{op.label}</p>
-                    <p className="text-xs text-slate-600 leading-snug">{op.definition}</p>
-                    <div className="flex flex-wrap gap-1 pt-0.5">
-                      {op.keywords.map(k => (
-                        <span key={k} className={cn('text-[10px] px-1.5 py-0.5 rounded-full border font-medium', selected ? cn(op.light, op.border, 'text-slate-700') : 'bg-slate-100 border-slate-200 text-slate-500')}>
-                          {k}
-                        </span>
-                      ))}
+                  <button
+                    type="button"
+                    aria-expanded={helpOpen}
+                    aria-label={`Aide pour ${op.label}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenOperationHelp(helpOpen ? null : op.id);
+                    }}
+                    className="absolute right-2 top-2 h-7 w-7 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-800 flex items-center justify-center font-bold"
+                  >
+                    ?
+                  </button>
+
+                  {helpOpen && (
+                    <div className="mx-3 mb-3 rounded-xl border border-blue-200 bg-white p-3 shadow-sm text-sm text-slate-700">
+                      <p className="font-bold text-slate-900 mb-1">Quand l’utiliser ?</p>
+                      <p className="leading-snug">{op.definition}</p>
+                      <p className="font-bold text-slate-900 mt-2 mb-1">Mots utiles</p>
+                      <div className="flex flex-wrap gap-1">
+                        {[...op.keywords, ...op.moreKeywords].map(k => (
+                          <span key={k} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">{k}</span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
