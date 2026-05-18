@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Card, Button, Input } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Highlighter, Route, HelpCircle, Trash2 } from 'lucide-react';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Highlighter, Route, HelpCircle, Trash2, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
+import { HintPanel } from './HintPanel';
 
 interface Step4PlanProps {
   problem: any;
@@ -184,6 +185,8 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const [showEstimationHelp, setShowEstimationHelp] = useState(false);
   const [openOperationHelp, setOpenOperationHelp] = useState<string | null>(null);
   const [activeEstimationStep, setActiveEstimationStep] = useState(0);
+  const [showLocalHint, setShowLocalHint] = useState(false);
+  const [localHintLevel, setLocalHintLevel] = useState(1);
 
   const quickCalculation = estimationSteps.filter(step => step.trim()).join('\n');
 
@@ -270,6 +273,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const step3Numbers = extractNumbers(step3Data?.important ?? '');
   const estimationType = inferEstimationType(problem);
   const help = HELP_CONTENT[estimationType] || HELP_CONTENT.arithmetique;
+  const problemHints = problem?.hints ?? undefined;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
@@ -305,6 +309,16 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             <p className="text-sm text-yellow-900 whitespace-pre-wrap leading-snug">{importantFromStep3}</p>
           ) : (
             <p className="text-sm text-yellow-900 leading-snug">Les infos retenues à l’étape 3 apparaîtront ici.</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => setShowLocalHint(true)} className="w-full justify-start gap-2 border-yellow-300 bg-yellow-50 text-yellow-800 hover:bg-yellow-100 hover:border-yellow-400">
+            <Lightbulb className="h-4 w-4" />
+            Indice
+          </Button>
+          {showLocalHint && (
+            <HintPanel currentStep={4} hintLevel={localHintLevel} hints={problemHints} onNextLevel={() => setLocalHintLevel(prev => Math.min(prev + 1, 3))} onClose={() => setShowLocalHint(false)} />
           )}
         </div>
       </aside>
