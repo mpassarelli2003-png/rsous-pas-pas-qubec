@@ -83,7 +83,7 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
             <li className="leading-snug">• Je cherche le nombre de...</li>
             <li className="leading-snug">• Je cherche le total de...</li>
             {showProbabilityStarter && (
-              <li className="leading-snug">• Je cherche ce qui est le plus probable.</li>
+              <li className="leading-snug">• Je cherche ce qui est le plus probable entre...</li>
             )}
           </ul>
         </div>
