@@ -51,7 +51,15 @@ const defaultRows: Record<Exclude<OrganizerId, 'list' | 'schema'>, Row[]> = {
 };
 
 const tokenizeText = (text: string) => text.split(/(\s+)/).filter(part => part.length > 0);
-const cleanToken = (token: string) => token.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+const cleanToken = (token: string) => {
+  const value = token
+    .trim()
+    .replace(/[−–—]/g, '-')
+    .replace(/^[^\p{L}\p{N}+\-°]+/gu, '')
+    .replace(/[^\p{L}\p{N}°]+$/gu, '');
+
+  return /^[+\-](?!\d)/.test(value) ? value.slice(1) : value;
+};
 
 const getHighlightedContentTokens = (content: string, highlightedTokenIds: string[] = []) => {
   const highlightedSet = new Set(highlightedTokenIds.filter(id => id.startsWith('content-')));
