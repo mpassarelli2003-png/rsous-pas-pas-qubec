@@ -181,6 +181,7 @@ export function SolvePage() {
   const progress = (currentStep / 6) * 100;
   const problemHints = problem.hints ?? undefined;
   const bodyWidthClass = 'max-w-6xl';
+  const showHeaderHint = currentStep >= 5;
 
   return (
     <Page>
@@ -194,7 +195,7 @@ export function SolvePage() {
               <PageTitle className="text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{problem.title}</PageTitle>
             </div>
             <div className="flex items-center gap-2">
-              {currentStep > 1 && (
+              {showHeaderHint && (
                 <Button variant="outline" size="sm" onClick={handleOpenHint} disabled={hintLevel >= 3 && hintOpen} className="gap-2 border-yellow-300 text-yellow-800 hover:bg-yellow-50 hover:border-yellow-400 disabled:opacity-60">
                   <Lightbulb className="h-4 w-4" />
                   <span className="hidden sm:inline">{hintButtonLabel}</span>
@@ -220,7 +221,7 @@ export function SolvePage() {
           onToggleStrikethrough={currentStep === 3 ? toggleStrikethrough : undefined}
         />
 
-        {hintOpen && (
+        {hintOpen && showHeaderHint && (
           <div className="mb-6">
             <HintPanel currentStep={currentStep} hintLevel={hintLevel} hints={problemHints} onNextLevel={handleNextHintLevel} onClose={() => setHintOpen(false)} />
           </div>
