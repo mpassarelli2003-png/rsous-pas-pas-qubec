@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Checkbox } from '@blinkdotnew/ui';
+import { Checkbox } from '@/lib/ui';
 import { cn } from '@/lib/utils';
 
 interface Step1ReadProps {
