@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
+import HotToaster, { toast as hotToast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 type AnyProps = React.HTMLAttributes<HTMLElement> & Record<string, any>;
@@ -76,8 +77,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ classN
   );
 
   if (asChild && React.isValidElement(children)) {
+    const childProps = (children as React.ReactElement<any>).props;
     return React.cloneElement(children as React.ReactElement<any>, {
-      className: cn((children as React.ReactElement<any>).props.className, classes),
+      className: cn(childProps.className, classes),
       ...props,
     });
   }
@@ -102,7 +104,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
 Textarea.displayName = 'Textarea';
 
 export function Progress({ value = 0, className, ...props }: { value?: number; className?: string }) {
-  const pct = Math.max(0, Math.min(100, value));
+  const pct = Math.max(0, Math.min(100, Number(value) || 0));
   return <div className={cn('relative h-4 w-full overflow-hidden rounded-full bg-secondary', className)} {...props}><div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} /></div>;
 }
 
@@ -138,33 +140,51 @@ export function TabsContent({ value, className, children, ...props }: AnyProps &
   return <div className={cn('mt-2', className)} {...props}>{children}</div>;
 }
 
-const SelectContext = createContext<{ value?: string; onValueChange?: (value: string) => void }>({});
+const SelectContext = createContext<{ value?: string; defaultValue?: string; onValueChange?: (value: string) => void; placeholder?: string }>({});
 
 export function Select({ value, defaultValue, onValueChange, children }: { value?: string; defaultValue?: string; onValueChange?: (value: string) => void; children: React.ReactNode }) {
-  return <SelectContext.Provider value={{ value: value ?? defaultValue, onValueChange }}>{children}</SelectContext.Provider>;
+  return <SelectContext.Provider value={{ value, defaultValue, onValueChange }}>{children}</SelectContext.Provider>;
 }
 
 export function SelectTrigger({ className, children, ...props }: AnyProps) {
-  return <div className={cn('flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm', className)} {...props}>{children}</div>;
+  return <div className={cn('sr-only', className)} {...props}>{children}</div>;
 }
 
 export function SelectValue({ placeholder }: { placeholder?: string }) {
   const ctx = useContext(SelectContext);
-  return <span>{ctx.value || placeholder}</span>;
+  return <span>{ctx.value ?? ctx.defaultValue ?? placeholder}</span>;
+}
+
+function extractSelectItems(children: React.ReactNode): React.ReactElement<any>[] {
+  const items: React.ReactElement<any>[] = [];
+  React.Children.forEach(children, child => {
+    if (!React.isValidElement(child)) return;
+    if ('value' in child.props) {
+      items.push(child as React.ReactElement<any>);
+      return;
+    }
+    if (child.props?.children) {
+      items.push(...extractSelectItems(child.props.children));
+    }
+  });
+  return items;
 }
 
 export function SelectContent({ className, children, ...props }: AnyProps) {
   const ctx = useContext(SelectContext);
-  const items = React.Children.toArray(children).filter(React.isValidElement) as React.ReactElement<any>[];
+  const items = useMemo(() => extractSelectItems(children), [children]);
+  const currentValue = ctx.value ?? ctx.defaultValue ?? '';
+
   return (
     <select
-      className={cn('mt-1 h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm', className)}
-      value={ctx.value || ''}
+      className={cn('h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50', className)}
+      value={currentValue}
       onChange={(e) => ctx.onValueChange?.(e.target.value)}
       {...props}
     >
+      {!currentValue && <option value="" disabled>Choisir...</option>}
       {items.map((item, index) => (
-        <option key={index} value={item.props.value}>{item.props.children}</option>
+        <option key={`${item.props.value}-${index}`} value={item.props.value}>{item.props.children}</option>
       ))}
     </select>
   );
@@ -174,12 +194,12 @@ export function SelectItem({ children }: { value: string; children: React.ReactN
   return <>{children}</>;
 }
 
-export function Toaster() {
-  return null;
+export function Toaster(props: any) {
+  return <HotToaster {...props} />;
 }
 
 export const toast = {
-  success: (message: string) => console.log(message),
-  error: (message: string) => console.error(message),
-  info: (message: string) => console.info(message),
+  success: (message: string) => hotToast.success(message),
+  error: (message: string) => hotToast.error(message),
+  info: (message: string) => hotToast(message),
 };
