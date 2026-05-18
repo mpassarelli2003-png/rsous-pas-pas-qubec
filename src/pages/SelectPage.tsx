@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Page, PageBody, PageHeader, PageTitle, Card, Button, Badge } from '@blinkdotnew/ui';
 import { Link } from '@tanstack/react-router';
-import { BookOpen, GraduationCap, Trophy, ChevronRight, Zap } from 'lucide-react';
+import { BookOpen, GraduationCap, Trophy, ChevronRight, Zap, SlidersHorizontal } from 'lucide-react';
 import problemsData from '../data/problems.json';
 import pfeq5Batch2 from '../data/pfeq5-batch2.json';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,18 @@ import {
   getSubConceptLabel,
 } from '../lib/curriculum';
 
+const DIFFICULTIES = [
+  { id: 'facile', label: 'Facile', helper: 'Je débute ou je révise.' },
+  { id: 'moyen', label: 'Moyen', helper: 'Je pratique avec un défi normal.' },
+  { id: 'difficile', label: 'Difficile', helper: 'Je veux un problème plus long.' },
+  { id: 'defi', label: 'Défi', helper: 'Je veux me dépasser.' },
+] as const;
+
+const getDifficultyLabel = (difficulty?: string) => {
+  if (difficulty === 'defi') return 'Défi';
+  return DIFFICULTIES.find(d => d.id === difficulty)?.label ?? difficulty ?? 'Moyen';
+};
+
 export function SelectPage() {
   const search = useSearch({ from: '/select' });
   const examMode = search.examMode;
@@ -24,6 +36,7 @@ export function SelectPage() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [selectedSubConcept, setSelectedSubConcept] = useState<string | null>(null);
   const [selectedSocialContext, setSelectedSocialContext] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
 
   const allProblems = useMemo(() => {
     const custom = loadCustomProblems().filter(p => p.status === 'publie');
@@ -39,11 +52,13 @@ export function SelectPage() {
     const problemDomain = getProblemDomain(problem);
     const problemSubConcept = getProblemSubConcept(problem);
     const socialContext = (problem as any).socialStudiesContext || '';
+    const difficulty = (problem as any).difficulty || 'moyen';
 
     if (level && problem.level !== level) return false;
     if (selectedDomain && problemDomain !== selectedDomain) return false;
     if (selectedSubConcept && problemSubConcept !== selectedSubConcept) return false;
     if (selectedSocialContext && socialContext !== selectedSocialContext) return false;
+    if (selectedDifficulty && difficulty !== selectedDifficulty) return false;
     return true;
   });
 
@@ -121,7 +136,7 @@ export function SelectPage() {
           </div>
         </section>
 
-        {/* Subconcept + Social context */}
+        {/* Subconcept + Social context + Difficulty */}
         <section className={cn("space-y-4 transition-all", !level && "opacity-30 pointer-events-none")}>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-3">
@@ -174,6 +189,34 @@ export function SelectPage() {
               </div>
             </div>
           </div>
+
+          <div className="space-y-3 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-base font-bold flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-primary" />
+              Niveau de difficulté
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <Button
+                variant={!selectedDifficulty ? 'primary' : 'outline'}
+                className="h-auto min-h-16 flex flex-col items-start text-left gap-1 rounded-xl p-3"
+                onClick={() => setSelectedDifficulty(null)}
+              >
+                <span className="font-bold">Tous</span>
+                <span className="text-xs opacity-80">Voir tous les problèmes.</span>
+              </Button>
+              {DIFFICULTIES.map(difficulty => (
+                <Button
+                  key={difficulty.id}
+                  variant={selectedDifficulty === difficulty.id ? 'primary' : 'outline'}
+                  className="h-auto min-h-16 flex flex-col items-start text-left gap-1 rounded-xl p-3"
+                  onClick={() => setSelectedDifficulty(selectedDifficulty === difficulty.id ? null : difficulty.id)}
+                >
+                  <span className="font-bold">{difficulty.label}</span>
+                  <span className="text-xs opacity-80">{difficulty.helper}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* Problems Grid */}
@@ -191,14 +234,18 @@ export function SelectPage() {
               const domain = getProblemDomain(problem);
               const subConcept = getProblemSubConcept(problem);
               const socialContext = (problem as any).socialStudiesContext;
+              const difficulty = (problem as any).difficulty || 'moyen';
               return (
                 <Card key={problem.id} className="p-6 hover:shadow-lg transition-all border-2 group hover:border-primary/50 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-2">
+                  <div className="absolute top-0 right-0 p-2 flex flex-col items-end gap-1">
                     <Badge className="bg-primary/10 text-primary border-none">{problem.level}e année</Badge>
+                    <Badge variant="outline" className="bg-white/90 text-[10px] font-bold uppercase">
+                      {getDifficultyLabel(difficulty)}
+                    </Badge>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <div className="flex flex-wrap gap-1.5 pr-12">
+                      <div className="flex flex-wrap gap-1.5 pr-20">
                         <Badge variant="secondary" className="text-[10px] font-bold uppercase">
                           {getDomainLabel(domain)}
                         </Badge>
