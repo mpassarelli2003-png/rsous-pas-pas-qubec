@@ -1,12 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,100..700;1,100..700&display=swap');
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   Blink UI Theme CSS
-   REQUIRED for @blinkdotnew/ui components to render correctly.
-   BlinkUIProvider adds .theme-{name} + .dark/.light to <html>,
-   activating the matching CSS variable set below.
-   ───────────────────────────────────────────────────────────────────────────── */
-@import '@blinkdotnew/ui/styles';
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:ital,wght@0,100..700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -38,10 +30,8 @@
   }
 }
 
-/* ── App palette (unlayered, after utilities) ─────────────────────────────────
-   Overrides @blinkdotnew/ui theme colors. @layer base loses specificity to UI themes.
-   Dark mode uses :root.dark + .theme-*.dark to match BlinkUIProvider.
-   ⚠️ AGENT MUST REPLACE placeholder values with a custom palette.
+/* ── App palette ──────────────────────────────────────────────────────────────
+   Variables locales utilisées par Tailwind et les composants UI autonomes.
    ──────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Québec School Notebook Palette */
@@ -89,9 +79,9 @@
   --sidebar-ring: 221 83% 53%;
 
   /* Fonts */
-  --font-sans: 'Geist Sans', 'Inter', sans-serif;
-  --font-heading: 'Geist Sans', 'Inter', sans-serif;
-  --font-mono: 'Geist Mono', monospace;
+  --font-sans: 'DM Sans', 'Inter', sans-serif;
+  --font-heading: 'DM Sans', 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
 
   /* Spacing & Radius */
   --radius: 0.75rem; /* Rounder for child-friendly feel */
