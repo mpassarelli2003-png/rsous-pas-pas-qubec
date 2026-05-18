@@ -18,9 +18,9 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
-      {/* ── Bande gauche : Aide-mémoire de lecture ── */}
-      <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-24 lg:self-start rounded-2xl border-2 border-blue-300 bg-blue-50 p-5 shadow-sm">
+    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:gap-8 items-start">
+      {/* ── Colonne gauche fixe : Aide-mémoire de lecture ── */}
+      <aside className="w-full lg:sticky lg:top-28 lg:self-start rounded-2xl border-2 border-blue-300 bg-blue-50 p-5 shadow-sm z-[1]">
         <p className="text-xs font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-4">
           <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -57,7 +57,7 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
       </aside>
 
       {/* ── Zone principale : citation + cases à cocher + message ── */}
-      <div className="flex-1 min-w-0 space-y-6">
+      <div className="min-w-0 space-y-6">
         <div className="p-4 bg-primary/5 rounded-xl border border-primary/20 text-sm italic text-primary/80">
           "Lis le problème une première fois pour comprendre l'histoire. Relis ensuite pour trouver ce qu'on te demande."
         </div>
