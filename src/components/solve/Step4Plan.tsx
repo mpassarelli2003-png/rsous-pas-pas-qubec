@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, Highlighter, Route } from 'lucide-react';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Lightbulb, Highlighter, Route, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
 
@@ -12,9 +12,6 @@ interface Step4PlanProps {
   step3Data?: { important?: string; organizer?: string };
 }
 
-// ─── Définition enrichie de chaque opération ─────────────────────────────────
-// Les ids ('addition', 'soustraction', etc.) sont stables — ils sont sauvegardés
-// dans selectedOps et ne doivent pas changer.
 const OPERATIONS = [
   {
     id: 'addition',
@@ -66,10 +63,6 @@ const OPERATIONS = [
   },
 ];
 
-/**
- * Extrait les nombres depuis le texte des données importantes (étape 3).
- * Reconnaît entiers et décimaux (virgule ou point). Déduplique, ordre d'apparition.
- */
 function extractNumbers(text: string): string[] {
   if (!text) return [];
   const raw = text.match(/\d+(?:[,.]\d+)*/g) ?? [];
@@ -89,6 +82,75 @@ function extractImportantItems(text: string): string[] {
     .filter(Boolean);
 }
 
+function inferEstimationType(problem: any) {
+  const text = `${problem?.theme || ''} ${problem?.notion || ''} ${problem?.title || ''} ${problem?.question || ''}`.toLowerCase();
+  if (/probabil|hasard|chance|tir|piger|billet|dé|jeton/.test(text)) return 'probabilite';
+  if (/mesure|longueur|mètre|metre|cm|centim|kg|masse|litre|temps|durée|heure|min|température|aire|volume|périmètre/.test(text)) return 'mesure';
+  if (/fraction|rapport|proportion|recette|ingrédient|ingredient/.test(text)) return 'proportion';
+  return 'arithmetique';
+}
+
+const HELP_CONTENT: Record<string, { title: string; steps: string[]; example: string[]; tryText: string }> = {
+  arithmetique: {
+    title: 'Comment estimer en arithmétique',
+    steps: [
+      'Je regarde les nombres importants.',
+      'Je choisis des nombres plus faciles à calculer.',
+      'Je fais un calcul rapide.',
+      'Je garde cette réponse pour vérifier si mon vrai résultat a du sens.',
+    ],
+    example: [
+      'Exemple avec d’autres nombres : 327 + 189',
+      '327 ≈ 300 et 189 ≈ 200',
+      '300 + 200 = 500',
+      'Mon estimation est environ 500.',
+    ],
+    tryText: 'À ton tour : choisis des nombres faciles avec les nombres de ton problème.',
+  },
+  mesure: {
+    title: 'Comment estimer en mesure',
+    steps: [
+      'Je regarde l’unité : cm, m, kg, L, minutes, degrés…',
+      'Je choisis une mesure proche et facile.',
+      'Je vérifie si l’unité de ma réponse est logique.',
+    ],
+    example: [
+      'Exemple avec d’autres nombres : une corde mesure 198 cm.',
+      '198 cm est proche de 200 cm.',
+      'Mon estimation est environ 200 cm.',
+    ],
+    tryText: 'À ton tour : garde la bonne unité et choisis une mesure proche.',
+  },
+  probabilite: {
+    title: 'Comment estimer en probabilité',
+    steps: [
+      'Je compare les quantités possibles.',
+      'Je regarde ce qui est le plus nombreux, le moins nombreux ou impossible.',
+      'Je prévois ce qui est le plus probable sans faire un long calcul.',
+    ],
+    example: [
+      'Exemple avec d’autres nombres : 10 jetons verts et 3 jetons jaunes.',
+      'Il y a plus de jetons verts que de jetons jaunes.',
+      'J’estime qu’il est plus probable de piger un jeton vert.',
+    ],
+    tryText: 'À ton tour : compare les quantités de ton problème.',
+  },
+  proportion: {
+    title: 'Comment estimer avec une proportion',
+    steps: [
+      'Je repère la relation de départ.',
+      'Je cherche un multiplicateur facile.',
+      'Je prévois une réponse proche avant de calculer exactement.',
+    ],
+    example: [
+      'Exemple avec d’autres nombres : une recette pour 4 personnes doit servir 12 personnes.',
+      '12 est 3 fois plus grand que 4.',
+      'J’estime qu’il faudra environ 3 fois chaque ingrédient.',
+    ],
+    tryText: 'À ton tour : cherche si les quantités augmentent ou diminuent ensemble.',
+  },
+};
+
 export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4PlanProps) {
   const [selectedOps, setSelectedOps] = useState<string[]>(savedData?.selectedOps || []);
   const [estimation, setEstimation] = useState(savedData?.estimation || '');
@@ -96,6 +158,9 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const [planRows, setPlanRows] = useState<PlanRow[]>(
     savedData?.planRows || emptyPlanRows(1)
   );
+  const [easyNumbers, setEasyNumbers] = useState<Record<string, string>>(savedData?.easyNumbers || {});
+  const [quickCalculation, setQuickCalculation] = useState(savedData?.quickCalculation || '');
+  const [showEstimationHelp, setShowEstimationHelp] = useState(false);
 
   const pushUpdate = (patch: any) => {
     onUpdate({
@@ -104,6 +169,8 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
       whyOps,
       planRows,
       stepsCount: String(planRows.length),
+      easyNumbers,
+      quickCalculation,
       ...patch
     });
   };
@@ -134,14 +201,30 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
     pushUpdate({ planRows: rows });
   };
 
+  const updateEasyNumber = (num: string, value: string) => {
+    const next = { ...easyNumbers, [num]: value };
+    setEasyNumbers(next);
+    pushUpdate({ easyNumbers: next });
+  };
+
+  const updateQuickCalculation = (value: string) => {
+    setQuickCalculation(value);
+    pushUpdate({ quickCalculation: value });
+  };
+
+  const updateEstimation = (value: string) => {
+    setEstimation(value);
+    pushUpdate({ estimation: value });
+  };
+
   const importantFromStep3 = step3Data?.important?.trim();
   const importantItems = extractImportantItems(step3Data?.important ?? '');
   const step3Numbers = extractNumbers(step3Data?.important ?? '');
+  const estimationType = inferEstimationType(problem);
+  const help = HELP_CONTENT[estimationType] || HELP_CONTENT.arithmetique;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
-
-      {/* ── Colonne gauche : continuité visuelle avec les étapes 2 et 3 ── */}
       <aside className="w-full lg:sticky lg:top-28 lg:self-start space-y-3 z-[1]">
         <div className="rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
@@ -149,26 +232,11 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             Aide-mémoire
           </p>
           <ol className="space-y-2 text-sm text-blue-950">
-            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">1</span>
-              <p className="leading-snug">Je regarde ce que je cherche.</p>
-            </li>
-            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">2</span>
-              <p className="leading-snug">Je regarde les infos utiles.</p>
-            </li>
-            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">3</span>
-              <p className="leading-snug">Je choisis l’opération.</p>
-            </li>
-            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">4</span>
-              <p className="leading-snug">Je prévois mes étapes.</p>
-            </li>
-            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">5</span>
-              <p className="leading-snug">J’estime avant de calculer.</p>
-            </li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">1</span><p className="leading-snug">Je regarde ce que je cherche.</p></li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">2</span><p className="leading-snug">Je regarde les infos utiles.</p></li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">3</span><p className="leading-snug">Je choisis l’opération.</p></li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">4</span><p className="leading-snug">Je prévois mes étapes.</p></li>
+            <li className="grid grid-cols-[1.45rem_1fr] gap-2 items-start"><span className="flex h-5 w-5 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-[11px]">5</span><p className="leading-snug">J’estime avant de calculer.</p></li>
           </ol>
         </div>
 
@@ -190,22 +258,10 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
           ) : (
             <p className="text-sm text-yellow-900 leading-snug">Les infos retenues à l’étape 3 apparaîtront ici.</p>
           )}
-          {step3Numbers.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5 border-t border-yellow-200 pt-2">
-              {step3Numbers.map(num => (
-                <span key={num} className="inline-block rounded-md bg-white px-2 py-0.5 text-xs font-mono font-bold text-yellow-900 border border-yellow-300">
-                  {num}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
 
-      {/* ── Zone principale : 4A, 4B, 4C, plan final ── */}
       <div className="min-w-0 space-y-12">
-
-        {/* ── 4A: Opérations ── */}
         <section className="space-y-4">
           <div className="space-y-1">
             <h3 className="text-xl font-bold flex items-center gap-2">
@@ -230,51 +286,26 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                   onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleOp(op.id); } }}
                   className={cn(
                     'cursor-pointer rounded-xl border-2 p-3 flex items-start gap-3 transition-all select-none',
-                    selected
-                      ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring)
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                    selected ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring) : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                   )}
                 >
                   <div className="shrink-0 flex flex-col items-center gap-1 pt-0.5">
-                    <div className={cn(
-                      'h-5 w-5 rounded border-2 flex items-center justify-center transition-colors',
-                      selected ? cn(op.color, 'border-transparent') : 'border-slate-300 bg-white'
-                    )}>
+                    <div className={cn('h-5 w-5 rounded border-2 flex items-center justify-center transition-colors', selected ? cn(op.color, 'border-transparent') : 'border-slate-300 bg-white')}>
                       {selected && (
                         <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 12 12">
                           <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
-                    <span className={cn(
-                      'text-lg font-black leading-none',
-                      selected ? 'text-slate-700' : 'text-slate-400'
-                    )}>
-                      {op.symbol}
-                    </span>
+                    <span className={cn('text-lg font-black leading-none', selected ? 'text-slate-700' : 'text-slate-400')}>{op.symbol}</span>
                   </div>
 
                   <div className="flex-1 min-w-0 space-y-1">
-                    <p className={cn(
-                      'font-bold text-sm leading-tight',
-                      selected ? 'text-slate-900' : 'text-slate-600'
-                    )}>
-                      {op.label}
-                    </p>
-                    <p className="text-xs text-slate-600 leading-snug">
-                      {op.definition}
-                    </p>
+                    <p className={cn('font-bold text-sm leading-tight', selected ? 'text-slate-900' : 'text-slate-600')}>{op.label}</p>
+                    <p className="text-xs text-slate-600 leading-snug">{op.definition}</p>
                     <div className="flex flex-wrap gap-1 pt-0.5">
                       {op.keywords.map(k => (
-                        <span
-                          key={k}
-                          className={cn(
-                            'text-[10px] px-1.5 py-0.5 rounded-full border font-medium',
-                            selected
-                              ? cn(op.light, op.border, 'text-slate-700')
-                              : 'bg-slate-100 border-slate-200 text-slate-500'
-                          )}
-                        >
+                        <span key={k} className={cn('text-[10px] px-1.5 py-0.5 rounded-full border font-medium', selected ? cn(op.light, op.border, 'text-slate-700') : 'bg-slate-100 border-slate-200 text-slate-500')}>
                           {k}
                         </span>
                       ))}
@@ -286,7 +317,6 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
           </div>
         </section>
 
-        {/* ── 4B: Tableau de planification ── */}
         <section className="space-y-6">
           <div className="space-y-2">
             <h3 className="text-xl font-bold flex items-center gap-2">
@@ -299,12 +329,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
           </div>
 
           <div className="space-y-4 animate-fade-in">
-            <PlanTable
-              rows={planRows}
-              onChange={handlePlanRowsChange}
-              onAddRow={handleAddRow}
-              onDeleteRow={handleDeleteRow}
-            />
+            <PlanTable rows={planRows} onChange={handlePlanRowsChange} onAddRow={handleAddRow} onDeleteRow={handleDeleteRow} />
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-800 flex gap-2">
               <span className="font-bold shrink-0">💡</span>
               <span>Exemple : Étape 1 — calculer le rabais (×).</span>
@@ -312,40 +337,74 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
           </div>
         </section>
 
-        {/* ── 4C: Estimation ── */}
-        <section className="space-y-6">
+        <section className="space-y-5">
           <div className="space-y-2">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              4C. Je fais une estimation
-            </h3>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                4C. Je fais une estimation
+              </h3>
+              <Button variant="outline" size="sm" onClick={() => setShowEstimationHelp(true)} className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50">
+                <HelpCircle className="h-4 w-4" /> Comment estimer ?
+              </Button>
+            </div>
             <p className="text-muted-foreground text-sm">
-              Avant de calculer, j'estime ma réponse. Elle sert à vérifier si mon résultat final a du sens.
+              Je prévois une réponse proche. Elle m’aidera à vérifier si mon calcul final a du sens.
             </p>
           </div>
-          <div className="flex gap-4 items-center flex-wrap">
-            <span className="text-lg font-medium whitespace-nowrap">Environ :</span>
-            <Input
-              placeholder="Ex: 80 $"
-              className="max-w-[200px] h-12 text-lg font-bold border-2 focus:border-primary"
-              value={estimation}
-              onChange={e => { setEstimation(e.target.value); pushUpdate({ estimation: e.target.value }); }}
-            />
-          </div>
-          <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-xl flex gap-3">
-            <Lightbulb className="h-5 w-5 text-yellow-600 shrink-0" />
-            <div className="text-sm text-yellow-900">
-              <p className="font-bold">Astuces pour estimer :</p>
-              <ul className="list-disc list-inside ml-2">
-                <li>Arrondis les nombres.</li>
-                <li>Demande-toi si la réponse sera plus grande ou plus petite.</li>
-                <li>Pense à une réponse proche.</li>
-              </ul>
+
+          <Card className="p-4 border-2 border-yellow-200 bg-yellow-50/70 space-y-4">
+            <div>
+              <p className="text-sm font-bold text-yellow-900">Mes nombres utiles</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {step3Numbers.length > 0 ? step3Numbers.map(num => (
+                  <span key={num} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950">{num}</span>
+                )) : <span className="text-sm text-yellow-900 italic">Les nombres retenus à l’étape 3 apparaîtront ici.</span>}
+              </div>
             </div>
-          </div>
+
+            {estimationType === 'probabilite' ? (
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Je compare</label>
+                  <Input value={quickCalculation} onChange={e => updateQuickCalculation(e.target.value)} placeholder="Ex: Il y a plus de... que de..." className="mt-1 bg-white" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
+                  <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: Le plus probable est..." className="mt-1 bg-white" />
+                </div>
+              </div>
+            ) : (
+              <>
+                {step3Numbers.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-yellow-900">Je transforme en nombres faciles</p>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {step3Numbers.map(num => (
+                        <div key={num} className="grid grid-cols-[auto_1fr] items-center gap-2 rounded-lg bg-white/80 border border-yellow-200 p-2">
+                          <span className="font-bold text-yellow-950">{num} ≈</span>
+                          <Input value={easyNumbers[num] || ''} onChange={e => updateEasyNumber(num, e.target.value)} placeholder="nombre facile" className="h-9 bg-white" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon calcul rapide</label>
+                    <Input value={quickCalculation} onChange={e => updateQuickCalculation(e.target.value)} placeholder="Ex: 250 + 140 + 30" className="mt-1 bg-white" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
+                    <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: environ 420" className="mt-1 bg-white font-bold" />
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
         </section>
 
-        {/* ── Mon plan final ── */}
         <section className="space-y-4 pt-6 border-t border-dashed">
           <h3 className="text-xl font-bold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -363,8 +422,36 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
             </p>
           </Card>
         </section>
-
       </div>
+
+      {showEstimationHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden">
+            <div className="bg-primary text-primary-foreground px-5 py-4 flex items-center justify-between gap-3">
+              <h4 className="font-bold text-lg">{help.title}</h4>
+              <button type="button" onClick={() => setShowEstimationHelp(false)} className="rounded-full bg-white/15 hover:bg-white/25 h-8 w-8 flex items-center justify-center" aria-label="Fermer">×</button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
+                <p className="font-bold text-blue-950 mb-2">Ce que je fais</p>
+                <ol className="space-y-1 text-sm text-blue-950 list-decimal list-inside">
+                  {help.steps.map(step => <li key={step}>{step}</li>)}
+                </ol>
+              </div>
+              <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-3">
+                <p className="font-bold text-yellow-950 mb-2">Exemple avec d’autres nombres</p>
+                <div className="space-y-1 text-sm text-yellow-950">
+                  {help.example.map(line => <p key={line}>{line}</p>)}
+                </div>
+              </div>
+              <p className="text-sm font-medium text-slate-700">{help.tryText}</p>
+              <div className="flex justify-end">
+                <Button onClick={() => setShowEstimationHelp(false)}>Je comprends</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
