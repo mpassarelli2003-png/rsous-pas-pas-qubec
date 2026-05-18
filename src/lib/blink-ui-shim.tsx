@@ -112,6 +112,42 @@ export function Checkbox({ checked, onCheckedChange, className, ...props }: { ch
   return <input type="checkbox" checked={!!checked} onChange={(e) => onCheckedChange?.(e.target.checked)} className={cn('h-5 w-5 rounded border border-input accent-primary', className)} {...props} />;
 }
 
+export function Switch({ checked, onCheckedChange, className, disabled, ...props }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void; className?: string; disabled?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={!!checked}
+      disabled={disabled}
+      onClick={() => !disabled && onCheckedChange?.(!checked)}
+      className={cn(
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+        checked ? 'bg-primary' : 'bg-input',
+        className
+      )}
+      {...props}
+    >
+      <span className={cn('pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform', checked ? 'translate-x-5' : 'translate-x-0')} />
+    </button>
+  );
+}
+
+export function Slider({ value = [0], min = 0, max = 100, step = 1, onValueChange, className, ...props }: { value?: number[]; min?: number; max?: number; step?: number; onValueChange?: (value: number[]) => void; className?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'min' | 'max' | 'step' | 'onChange'>) {
+  const current = Array.isArray(value) ? value[0] ?? min : min;
+  return (
+    <input
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={current}
+      onChange={(e) => onValueChange?.([Number(e.target.value)])}
+      className={cn('w-full cursor-pointer accent-primary', className)}
+      {...props}
+    />
+  );
+}
+
 const TabsContext = createContext<{ value?: string; setValue?: (value: string) => void }>({});
 
 export function Tabs({ value, defaultValue, onValueChange, children, className, ...props }: AnyProps & { value?: string; defaultValue?: string; onValueChange?: (value: string) => void }) {
@@ -198,8 +234,13 @@ export function Toaster(props: any) {
   return <HotToaster {...props} />;
 }
 
-export const toast = {
-  success: (message: string) => hotToast.success(message),
-  error: (message: string) => hotToast.error(message),
-  info: (message: string) => hotToast(message),
+type ToastFunction = ((message: string) => string) & {
+  success: (message: string) => string;
+  error: (message: string) => string;
+  info: (message: string) => string;
 };
+
+export const toast = ((message: string) => hotToast(message)) as ToastFunction;
+toast.success = (message: string) => hotToast.success(message);
+toast.error = (message: string) => hotToast.error(message);
+toast.info = (message: string) => hotToast(message);
