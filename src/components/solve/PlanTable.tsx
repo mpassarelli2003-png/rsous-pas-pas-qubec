@@ -28,6 +28,22 @@ const OP_OPTIONS = [
   { value: 'autre',  label: 'Autre' },
 ];
 
+const ACTION_STARTERS = [
+  'Je calcule',
+  'J’ajoute',
+  'J’enlève',
+  'Je compare',
+  'Je partage',
+  'Je trouve',
+  'Je vérifie',
+];
+
+const actionPlaceholders = [
+  'Je calcule le total des informations utiles.',
+  'J’ajoute la prochaine quantité au total.',
+  'Je trouve la réponse demandée.',
+];
+
 export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDeleteRow }: PlanTableProps) {
   const update = (index: number, field: keyof PlanRow, value: string) => {
     if (!onChange) return;
@@ -35,16 +51,22 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
     onChange(next);
   };
 
+  const addStarter = (index: number, starter: string) => {
+    const current = rows[index]?.action || '';
+    const nextValue = current.trim() ? `${current.trim()} ${starter.toLowerCase()} ` : `${starter} `;
+    update(index, 'action', nextValue);
+  };
+
   const canDelete = rows.length > 1;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="overflow-x-auto rounded-xl border-2 border-primary/20 shadow-sm">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-primary text-primary-foreground">
               <th className="px-4 py-3 text-left font-bold whitespace-nowrap w-20">Étape</th>
-              <th className="px-4 py-3 text-left font-bold">Ce que je dois faire</th>
+              <th className="px-4 py-3 text-left font-bold">Ce que je vais calculer</th>
               <th className="px-4 py-3 text-left font-bold whitespace-nowrap w-44">Opération prévue</th>
               {!readOnly && onDeleteRow && (
                 <th className="px-2 py-3 w-10" />
@@ -72,12 +94,26 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
                       {row.action || '—'}
                     </p>
                   ) : (
-                    <Input
-                      value={row.action}
-                      onChange={e => update(i, 'action', e.target.value)}
-                      placeholder={`Ex: Calculer les billets de ${i === 0 ? '2,50 $' : i === 1 ? '5,00 $' : 'chaque sorte'}`}
-                      className="border-primary/20 focus:border-primary text-sm h-9"
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        value={row.action}
+                        onChange={e => update(i, 'action', e.target.value)}
+                        placeholder={actionPlaceholders[i] || 'Je calcule ce dont j’ai besoin pour avancer.'}
+                        className="border-primary/20 focus:border-primary text-sm h-9"
+                      />
+                      <div className="flex flex-wrap gap-1.5">
+                        {ACTION_STARTERS.map(starter => (
+                          <button
+                            key={starter}
+                            type="button"
+                            onClick={() => addStarter(i, starter)}
+                            className="rounded-md border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-800 hover:bg-blue-100"
+                          >
+                            {starter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </td>
 
@@ -125,6 +161,13 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
           </tbody>
         </table>
       </div>
+
+      {!readOnly && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-xs text-blue-900">
+          <span className="font-bold">Mots utiles : </span>
+          calculer · ajouter · enlever · comparer · partager · trouver · vérifier
+        </div>
+      )}
 
       {!readOnly && onAddRow && (
         <Button
