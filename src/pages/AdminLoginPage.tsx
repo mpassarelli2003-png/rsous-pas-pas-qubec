@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Page, PageBody, Card, Button, Input } from '@blinkdotnew/ui';
+import { Page, PageBody, Card, Button, Input } from '@/lib/ui';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { ShieldAlert, Lock, Home } from 'lucide-react';
 import { adminLogin } from '../lib/adminStore';
