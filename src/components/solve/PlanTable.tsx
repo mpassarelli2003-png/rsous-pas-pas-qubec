@@ -162,13 +162,6 @@ export function PlanTable({ rows, onChange, readOnly = false, onAddRow, onDelete
         </table>
       </div>
 
-      {!readOnly && (
-        <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-xs text-blue-900">
-          <span className="font-bold">Mots utiles : </span>
-          calculer · ajouter · enlever · comparer · partager · trouver · vérifier
-        </div>
-      )}
-
       {!readOnly && onAddRow && (
         <Button
           variant="outline"
