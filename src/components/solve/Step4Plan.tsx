@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Input } from '@/lib/ui';
-import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Highlighter, Route, HelpCircle } from 'lucide-react';
+import { Plus, Minus, X, Divide, Calculator, ListOrdered, Target, Sparkles, Highlighter, Route, HelpCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTable, PlanRow, emptyPlanRows } from './PlanTable';
 
@@ -71,6 +71,14 @@ const OPERATIONS = [
   },
 ];
 
+const ESTIMATION_OPERATIONS = [
+  { symbol: '+', label: 'addition' },
+  { symbol: '−', label: 'soustraction' },
+  { symbol: '×', label: 'multiplication' },
+  { symbol: '÷', label: 'division' },
+  { symbol: '≈', label: 'environ' },
+];
+
 function extractNumbers(text: string): string[] {
   if (!text) return [];
   const raw = text.match(/\d+(?:[,.]\d+)*/g) ?? [];
@@ -96,6 +104,12 @@ function inferEstimationType(problem: any) {
   if (/mesure|longueur|mètre|metre|cm|centim|kg|masse|litre|temps|durée|heure|min|température|aire|volume|périmètre/.test(text)) return 'mesure';
   if (/fraction|rapport|proportion|recette|ingrédient|ingredient/.test(text)) return 'proportion';
   return 'arithmetique';
+}
+
+function initialEstimationSteps(savedData: any): string[] {
+  if (Array.isArray(savedData?.estimationSteps) && savedData.estimationSteps.length > 0) return savedData.estimationSteps;
+  if (typeof savedData?.quickCalculation === 'string' && savedData.quickCalculation.trim()) return savedData.quickCalculation.split('\n');
+  return [''];
 }
 
 const HELP_CONTENT: Record<string, { title: string; steps: string[]; example: string[]; tryText: string }> = {
@@ -165,9 +179,12 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const [whyOps] = useState<Record<string, string>>(savedData?.whyOps || {});
   const [planRows, setPlanRows] = useState<PlanRow[]>(savedData?.planRows || emptyPlanRows(1));
   const [easyNumbers, setEasyNumbers] = useState<Record<string, string>>(savedData?.easyNumbers || {});
-  const [quickCalculation, setQuickCalculation] = useState(savedData?.quickCalculation || '');
+  const [estimationSteps, setEstimationSteps] = useState<string[]>(initialEstimationSteps(savedData));
   const [showEstimationHelp, setShowEstimationHelp] = useState(false);
   const [openOperationHelp, setOpenOperationHelp] = useState<string | null>(null);
+  const [activeEstimationStep, setActiveEstimationStep] = useState(0);
+
+  const quickCalculation = estimationSteps.filter(step => step.trim()).join('\n');
 
   const pushUpdate = (patch: any) => {
     onUpdate({
@@ -177,6 +194,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
       planRows,
       stepsCount: String(planRows.length),
       easyNumbers,
+      estimationSteps,
       quickCalculation,
       ...patch
     });
@@ -214,9 +232,31 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
     pushUpdate({ easyNumbers: next });
   };
 
-  const updateQuickCalculation = (value: string) => {
-    setQuickCalculation(value);
-    pushUpdate({ quickCalculation: value });
+  const updateEstimationStep = (index: number, value: string) => {
+    const next = estimationSteps.map((step, i) => i === index ? value : step);
+    setEstimationSteps(next);
+    pushUpdate({ estimationSteps: next, quickCalculation: next.filter(step => step.trim()).join('\n') });
+  };
+
+  const addEstimationStep = () => {
+    const next = [...estimationSteps, ''];
+    setEstimationSteps(next);
+    setActiveEstimationStep(next.length - 1);
+    pushUpdate({ estimationSteps: next, quickCalculation: next.filter(step => step.trim()).join('\n') });
+  };
+
+  const removeEstimationStep = (index: number) => {
+    const next = estimationSteps.length > 1 ? estimationSteps.filter((_, i) => i !== index) : [''];
+    setEstimationSteps(next);
+    setActiveEstimationStep(Math.min(activeEstimationStep, next.length - 1));
+    pushUpdate({ estimationSteps: next, quickCalculation: next.filter(step => step.trim()).join('\n') });
+  };
+
+  const insertEstimationSymbol = (symbol: string) => {
+    const index = Math.min(activeEstimationStep, estimationSteps.length - 1);
+    const current = estimationSteps[index] || '';
+    const nextValue = current.endsWith(' ') || current.length === 0 ? `${current}${symbol} ` : `${current} ${symbol} `;
+    updateEstimationStep(index, nextValue);
   };
 
   const updateEstimation = (value: string) => {
@@ -285,22 +325,13 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
               const selected = selectedOps.includes(op.id);
               const helpOpen = openOperationHelp === op.id;
               return (
-                <div
-                  key={op.id}
-                  className={cn(
-                    'relative rounded-xl border-2 bg-white transition-all',
-                    selected ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleOp(op.id)}
-                    role="checkbox"
-                    aria-checked={selected}
-                    className="w-full min-h-[76px] p-3 text-left flex items-center gap-3"
-                  >
-                    <span className={cn('h-8 w-8 rounded-lg flex items-center justify-center text-lg font-black text-white shrink-0', selected ? op.color : 'bg-slate-400')}>
-                      {selected ? '✓' : op.symbol}
+                <div key={op.id} className={cn('relative rounded-xl border-2 bg-white transition-all', selected ? cn(op.border, op.light, 'shadow-sm ring-2', op.ring) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50')}>
+                  <button type="button" onClick={() => toggleOp(op.id)} role="checkbox" aria-checked={selected} className="w-full min-h-[76px] p-3 pr-11 text-left grid grid-cols-[2rem_2.5rem_1fr] items-center gap-3">
+                    <span className={cn('h-7 w-7 rounded-md border-2 flex items-center justify-center shrink-0', selected ? 'bg-primary border-primary text-white' : 'bg-white border-slate-400 text-transparent')}>
+                      ✓
+                    </span>
+                    <span className={cn('h-9 w-9 rounded-lg flex items-center justify-center text-lg font-black text-white shrink-0', selected ? op.color : 'bg-slate-500')}>
+                      {op.symbol}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-bold text-slate-900 leading-tight">{op.label}</span>
@@ -313,16 +344,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                     </span>
                   </button>
 
-                  <button
-                    type="button"
-                    aria-expanded={helpOpen}
-                    aria-label={`Aide pour ${op.label}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenOperationHelp(helpOpen ? null : op.id);
-                    }}
-                    className="absolute right-2 top-2 h-7 w-7 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-800 flex items-center justify-center font-bold"
-                  >
+                  <button type="button" aria-expanded={helpOpen} aria-label={`Aide pour ${op.label}`} onClick={(e) => { e.stopPropagation(); setOpenOperationHelp(helpOpen ? null : op.id); }} className="absolute right-2 top-2 h-7 w-7 rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-800 flex items-center justify-center font-bold">
                     ?
                   </button>
 
@@ -394,7 +416,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
               <div className="grid md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Je compare</label>
-                  <Input value={quickCalculation} onChange={e => updateQuickCalculation(e.target.value)} placeholder="Ex: Il y a plus de... que de..." className="mt-1 bg-white" />
+                  <Input value={estimationSteps[0] || ''} onFocus={() => setActiveEstimationStep(0)} onChange={e => updateEstimationStep(0, e.target.value)} placeholder="Ex: Il y a plus de... que de..." className="mt-1 bg-white" />
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
@@ -417,15 +439,39 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                   </div>
                 )}
 
-                <div className="grid md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon calcul rapide</label>
-                    <Input value={quickCalculation} onChange={e => updateQuickCalculation(e.target.value)} placeholder="Ex: 250 + 140 + 30" className="mt-1 bg-white" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon calcul rapide, en plusieurs étapes</label>
+                    <Button type="button" variant="outline" size="sm" onClick={addEstimationStep} className="h-8 gap-1 bg-white border-yellow-300 text-yellow-900 hover:bg-yellow-100">
+                      <Plus className="h-4 w-4" /> Ajouter une étape
+                    </Button>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
-                    <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: environ 420" className="mt-1 bg-white font-bold" />
+                  <div className="space-y-2">
+                    {estimationSteps.map((step, index) => (
+                      <div key={index} className="grid grid-cols-[2rem_1fr_auto] items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-200 text-yellow-950 font-bold text-sm">{index + 1}</span>
+                        <Input value={step} onFocus={() => setActiveEstimationStep(index)} onChange={e => updateEstimationStep(index, e.target.value)} placeholder={index === 0 ? 'Ex: 250 + 140 = 390' : 'Ex: 390 + 30 = 420'} className="bg-white" />
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeEstimationStep(index)} className="h-9 w-9 text-slate-500 hover:text-red-600 hover:bg-red-50" aria-label={`Supprimer l'étape d'estimation ${index + 1}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
+                  <div className="rounded-xl bg-white/80 border border-yellow-200 p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-yellow-900 mb-2">Symboles utiles pour ton calcul rapide</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ESTIMATION_OPERATIONS.map(op => (
+                        <button key={op.symbol} type="button" onClick={() => insertEstimationSymbol(op.symbol)} className="h-10 min-w-10 rounded-lg border border-yellow-300 bg-white px-3 text-lg font-black text-yellow-950 hover:bg-yellow-100" aria-label={`Insérer le symbole ${op.label}`}>
+                          {op.symbol}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
+                  <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: environ 420" className="mt-1 bg-white font-bold" />
                 </div>
               </>
             )}
