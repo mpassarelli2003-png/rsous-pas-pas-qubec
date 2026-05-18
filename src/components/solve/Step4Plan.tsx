@@ -76,6 +76,7 @@ const ESTIMATION_OPERATIONS = [
   { symbol: '−', label: 'soustraction' },
   { symbol: '×', label: 'multiplication' },
   { symbol: '÷', label: 'division' },
+  { symbol: '=', label: 'égal' },
   { symbol: '≈', label: 'environ' },
 ];
 
@@ -450,7 +451,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
                     {estimationSteps.map((step, index) => (
                       <div key={index} className="grid grid-cols-[2rem_1fr_auto] items-center gap-2">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-200 text-yellow-950 font-bold text-sm">{index + 1}</span>
-                        <Input value={step} onFocus={() => setActiveEstimationStep(index)} onChange={e => updateEstimationStep(index, e.target.value)} placeholder={index === 0 ? 'Ex: 250 + 140 = 390' : 'Ex: 390 + 30 = 420'} className="bg-white" />
+                        <Input value={step} onFocus={() => setActiveEstimationStep(index)} onChange={e => updateEstimationStep(index, e.target.value)} placeholder={index === 0 ? 'Ex: nombre facile + nombre facile = total proche' : 'Ex: total proche + nombre facile = estimation'} className="bg-white" />
                         <Button type="button" variant="ghost" size="icon" onClick={() => removeEstimationStep(index)} className="h-9 w-9 text-slate-500 hover:text-red-600 hover:bg-red-50" aria-label={`Supprimer l'étape d'estimation ${index + 1}`}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -471,7 +472,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
 
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wide text-yellow-900">Mon estimation</label>
-                  <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: environ 420" className="mt-1 bg-white font-bold" />
+                  <Input value={estimation} onChange={e => updateEstimation(e.target.value)} placeholder="Ex: environ la réponse proche" className="mt-1 bg-white font-bold" />
                 </div>
               </>
             )}
