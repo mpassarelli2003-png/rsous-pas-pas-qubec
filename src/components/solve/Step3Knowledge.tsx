@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Card, Button, Textarea } from '@/lib/ui';
-import { ListTodo, Layout, Table as TableIcon, HelpCircle, Coins, Clock, Square, CheckCircle2, Plus, Trash2, Highlighter, EyeOff } from 'lucide-react';
+import { ListTodo, Layout, Table as TableIcon, Coins, Clock, Square, CheckCircle2, Plus, Trash2, Highlighter, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HintPanel } from './HintPanel';
 
 interface Step3KnowledgeProps {
   problem: any;
@@ -93,8 +92,6 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
   const [organizer, setOrganizer] = useState<OrganizerId>(savedData?.organizer || 'list');
   const [important, setImportant] = useState(savedData?.important || '');
   const [workspace, setWorkspace] = useState<Record<string, any>>(savedData?.workspace || {});
-  const [showHint, setShowHint] = useState(false);
-  const [hintLevel, setHintLevel] = useState(1);
   const highlightedContentTokens = getHighlightedContentTokens(problem?.content || '', highlightedTokenIds);
 
   const emitUpdate = (nextOrganizer: OrganizerId, nextImportant: string, nextWorkspace: Record<string, any>) => {
@@ -397,17 +394,6 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
 
             {renderWorkspace()}
           </Card>
-
-          <div className="space-y-3">
-            <Button variant="ghost" onClick={() => setShowHint(true)} className="gap-2 text-yellow-700 hover:text-yellow-800 hover:bg-yellow-50">
-              <HelpCircle className="h-4 w-4" />
-              Besoin d'un indice ?
-            </Button>
-
-            {showHint && (
-              <HintPanel currentStep={3} hintLevel={hintLevel} onNextLevel={() => setHintLevel(prev => Math.min(prev + 1, 3))} onClose={() => setShowHint(false)} />
-            )}
-          </div>
         </div>
       </div>
     </div>
