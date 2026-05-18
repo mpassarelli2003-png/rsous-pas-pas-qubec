@@ -34,6 +34,8 @@ export function SolvePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [answers, setAnswers] = useState<any>({});
   const [highlightedTokenIds, setHighlightedTokenIds] = useState<string[]>([]);
+  const [strikethroughTokenIds, setStrikethroughTokenIds] = useState<string[]>([]);
+  const [markMode, setMarkMode] = useState<'highlight' | 'strike'>('highlight');
 
   const [hintOpen, setHintOpen] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
@@ -74,7 +76,9 @@ export function SolvePage() {
 
   const handleNext = () => {
     if (currentStep < 6) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      setMarkMode(nextStep === 3 ? 'strike' : 'highlight');
       setHintOpen(false);
       window.scrollTo(0, 0);
     }
@@ -82,7 +86,9 @@ export function SolvePage() {
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      const nextStep = currentStep - 1;
+      setCurrentStep(nextStep);
+      setMarkMode(nextStep === 3 ? 'strike' : 'highlight');
       setHintOpen(false);
       window.scrollTo(0, 0);
     }
@@ -94,6 +100,14 @@ export function SolvePage() {
 
   const toggleHighlight = (tokenId: string) => {
     setHighlightedTokenIds(prev =>
+      prev.includes(tokenId)
+        ? prev.filter(id => id !== tokenId)
+        : [...prev, tokenId]
+    );
+  };
+
+  const toggleStrikethrough = (tokenId: string) => {
+    setStrikethroughTokenIds(prev =>
       prev.includes(tokenId)
         ? prev.filter(id => id !== tokenId)
         : [...prev, tokenId]
@@ -193,7 +207,14 @@ export function SolvePage() {
       </PageHeader>
 
       <PageBody className={`pb-24 pt-6 ${bodyWidthClass} mx-auto w-full`}>
-        <ProblemBanner problem={problem} highlightedTokenIds={highlightedTokenIds} onToggleHighlight={toggleHighlight} />
+        <ProblemBanner
+          problem={problem}
+          highlightedTokenIds={highlightedTokenIds}
+          strikethroughTokenIds={strikethroughTokenIds}
+          markMode={markMode}
+          onToggleHighlight={toggleHighlight}
+          onToggleStrikethrough={currentStep === 3 ? toggleStrikethrough : undefined}
+        />
 
         {hintOpen && (
           <div className="mb-6">
