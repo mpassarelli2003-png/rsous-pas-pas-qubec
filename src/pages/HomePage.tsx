@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
-import { Page, PageBody, PageHeader, PageTitle, Button } from '@blinkdotnew/ui';
+import { Page, PageBody, PageHeader, PageTitle, Button, Card } from '@/lib/ui';
 import { Link } from '@tanstack/react-router';
 import { BookOpen, BarChart2, Zap, ChevronRight, Shield } from 'lucide-react';
-import { Card } from '@blinkdotnew/ui';
 
 export function HomePage() {
   useEffect(() => {
