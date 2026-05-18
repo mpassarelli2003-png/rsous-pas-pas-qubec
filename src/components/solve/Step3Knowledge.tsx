@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Textarea } from '@blinkdotnew/ui';
-import { ListTodo, Layout, Table as TableIcon, HelpCircle, Coins, Clock, Square, CheckCircle2 } from 'lucide-react';
+import { ListTodo, Layout, Table as TableIcon, HelpCircle, Coins, Clock, Square, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HintPanel } from './HintPanel';
 
@@ -17,12 +17,18 @@ const inputClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2
 const labelClass = 'text-xs font-bold uppercase tracking-wide text-slate-500';
 
 const ORGANIZERS: { id: OrganizerId; label: string; icon: JSX.Element; helper: string }[] = [
-  { id: 'list', label: 'Liste', icon: <ListTodo className="h-4 w-4" />, helper: 'Données une sous l’autre' },
+  { id: 'list', label: 'Liste', icon: <ListTodo className="h-4 w-4" />, helper: 'Données une par ligne' },
   { id: 'table', label: 'Tableau', icon: <TableIcon className="h-4 w-4" />, helper: 'Donnée / sens / utile' },
   { id: 'schema', label: 'Schéma', icon: <Layout className="h-4 w-4" />, helper: 'Groupes ou flèches' },
   { id: 'money', label: 'Argent', icon: <Coins className="h-4 w-4" />, helper: 'Prix et budget' },
   { id: 'clock', label: 'Temps', icon: <Clock className="h-4 w-4" />, helper: 'Heure et durée' },
   { id: 'shape', label: 'Géométrie', icon: <Square className="h-4 w-4" />, helper: 'Mesures et formule' },
+];
+
+const defaultListRows: Row[] = [
+  { value: '' },
+  { value: '' },
+  { value: '' },
 ];
 
 const defaultRows: Record<Exclude<OrganizerId, 'list' | 'schema'>, Row[]> = {
@@ -46,6 +52,14 @@ const defaultRows: Record<Exclude<OrganizerId, 'list' | 'schema'>, Row[]> = {
     { shape: '', measures: '', formula: '', target: '' },
     { shape: '', measures: '', formula: '', target: '' },
   ],
+};
+
+const serializeListRows = (rows: Row[]) => {
+  return rows
+    .map(row => row.value?.trim())
+    .filter(Boolean)
+    .map(value => `• ${value}`)
+    .join('\n');
 };
 
 const serializeRows = (type: OrganizerId, rows: Row[]) => {
@@ -86,6 +100,44 @@ export function Step3Knowledge({ problem, onUpdate, savedData }: Step3KnowledgeP
   const handleOrganizerChange = (id: OrganizerId) => {
     setOrganizer(id);
     emitUpdate(id, important, workspace);
+  };
+
+  const getListRows = (): Row[] => {
+    if (workspace.list) return workspace.list;
+    if (important && organizer === 'list') {
+      const parsedRows = important
+        .split('\n')
+        .map((line: string) => ({ value: line.replace(/^\s*•\s*/, '').trim() }))
+        .filter((row: Row) => row.value);
+      return parsedRows.length > 0 ? parsedRows : defaultListRows;
+    }
+    return defaultListRows;
+  };
+
+  const updateListRow = (rowIndex: number, value: string) => {
+    const rows = getListRows().map((row, index) => index === rowIndex ? { ...row, value } : row);
+    const nextWorkspace = { ...workspace, list: rows };
+    const serialized = serializeListRows(rows);
+    setWorkspace(nextWorkspace);
+    setImportant(serialized);
+    emitUpdate(organizer, serialized, nextWorkspace);
+  };
+
+  const addListRow = () => {
+    const rows = [...getListRows(), { value: '' }];
+    const nextWorkspace = { ...workspace, list: rows };
+    setWorkspace(nextWorkspace);
+    emitUpdate(organizer, serializeListRows(rows), nextWorkspace);
+  };
+
+  const removeListRow = (rowIndex: number) => {
+    const rows = getListRows().filter((_, index) => index !== rowIndex);
+    const safeRows = rows.length > 0 ? rows : [{ value: '' }];
+    const nextWorkspace = { ...workspace, list: safeRows };
+    const serialized = serializeListRows(safeRows);
+    setWorkspace(nextWorkspace);
+    setImportant(serialized);
+    emitUpdate(organizer, serialized, nextWorkspace);
   };
 
   const getRows = (type: Exclude<OrganizerId, 'list' | 'schema'>): Row[] => {
@@ -203,13 +255,38 @@ export function Step3Knowledge({ problem, onUpdate, savedData }: Step3KnowledgeP
 
   const renderWorkspace = () => {
     if (organizer === 'list') {
+      const rows = getListRows();
       return (
-        <Textarea
-          placeholder={'Ex. :\n8 boîtes\n24 crayons par boîte\n36 crayons gardés\n6 équipes'}
-          className="min-h-[190px] resize-none border-2 border-primary/20 focus:border-primary bg-white text-sm"
-          value={important}
-          onChange={(e) => handleTextChange(e.target.value)}
-        />
+        <div className="space-y-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-900">
+            Écris une seule donnée importante par ligne. Les points de forme sont déjà préparés pour t’aider à ne pas tout mélanger.
+          </div>
+          <div className="space-y-2">
+            {rows.map((row, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">•</span>
+                <input
+                  className={inputClass}
+                  placeholder={`Donnée importante ${index + 1}`}
+                  value={row.value}
+                  onChange={e => updateListRow(index, e.target.value)}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeListRow(index)}
+                  className="shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50"
+                  aria-label="Supprimer cette donnée"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={addListRow} className="gap-2">
+            <Plus className="h-4 w-4" /> Ajouter une donnée
+          </Button>
+        </div>
       );
     }
 
