@@ -4,7 +4,9 @@ import { Button } from '@/lib/ui';
 type Tool = 'pen' | 'eraser' | 'arrow' | 'box' | 'groups' | 'numberLine' | 'share';
 type Point = { x: number; y: number };
 
-const CANVAS_HEIGHT = 260;
+const INITIAL_CANVAS_HEIGHT = 260;
+const EXPAND_STEP = 180;
+const EXPAND_MARGIN = 52;
 const GROUP_OPTIONS = [2, 3, 4, 5, 10];
 const SHARE_OPTIONS = [2, 3, 4, 5, 10];
 const NUMBER_LINE_OPTIONS = [5, 10];
@@ -25,22 +27,26 @@ export function DrawingPad() {
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
   const startPoint = useRef<Point | null>(null);
+  const canvasHeightRef = useRef(INITIAL_CANVAS_HEIGHT);
+  const [canvasHeight, setCanvasHeight] = useState(INITIAL_CANVAS_HEIGHT);
   const [tool, setTool] = useState<Tool>('pen');
   const [groupCount, setGroupCount] = useState(5);
   const [shareCount, setShareCount] = useState(4);
   const [numberLineTicks, setNumberLineTicks] = useState(5);
 
-  const setupCanvas = (preserve = true) => {
+  const setupCanvas = (preserve = true, nextHeight = canvasHeightRef.current) => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
     if (!canvas || !wrapper) return;
 
     const rect = wrapper.getBoundingClientRect();
     const width = Math.max(Math.floor(rect.width), 320);
-    const height = CANVAS_HEIGHT;
+    const height = nextHeight;
     const dpr = window.devicePixelRatio || 1;
     const previousImage = preserve && canvas.width > 0 ? canvas.toDataURL('image/png') : '';
 
+    canvasHeightRef.current = height;
+    setCanvasHeight(height);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     canvas.width = Math.floor(width * dpr);
@@ -59,10 +65,18 @@ export function DrawingPad() {
       const img = new Image();
       img.onload = () => {
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, Math.min(height, img.height));
       };
       img.src = previousImage;
     }
+  };
+
+  const expandIfNeeded = (point: Point, extraSpace = 0) => {
+    const neededHeight = point.y + EXPAND_MARGIN + extraSpace;
+    if (neededHeight <= canvasHeightRef.current) return;
+
+    const nextHeight = canvasHeightRef.current + Math.ceil((neededHeight - canvasHeightRef.current) / EXPAND_STEP) * EXPAND_STEP;
+    setupCanvas(true, nextHeight);
   };
 
   useEffect(() => {
@@ -72,7 +86,7 @@ export function DrawingPad() {
     if (!wrapper || typeof ResizeObserver === 'undefined') return;
 
     const observer = new ResizeObserver(() => {
-      if (!isDrawing.current) setupCanvas(true);
+      if (!isDrawing.current) setupCanvas(true, canvasHeightRef.current);
     });
 
     observer.observe(wrapper);
@@ -181,6 +195,12 @@ export function DrawingPad() {
     }
   };
 
+  const shapeExtraSpace = () => {
+    if (tool === 'groups') return groupCount > 5 ? 95 : 55;
+    if (tool === 'share') return shareCount > 5 ? 110 : 60;
+    return 40;
+  };
+
   const drawShape = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
     if (tool === 'arrow') drawArrow(ctx, from, to);
     if (tool === 'box') drawBox(ctx, from, to);
@@ -191,7 +211,6 @@ export function DrawingPad() {
 
   const start = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.preventDefault();
-    setupCanvas(true);
 
     const canvas = event.currentTarget;
     const ctx = canvas.getContext('2d');
@@ -199,6 +218,7 @@ export function DrawingPad() {
 
     canvas.setPointerCapture(event.pointerId);
     const point = getPoint(event);
+    expandIfNeeded(point, shapeExtraSpace());
     isDrawing.current = true;
     lastPoint.current = point;
     startPoint.current = point;
@@ -215,10 +235,12 @@ export function DrawingPad() {
     event.preventDefault();
     if (!isDrawing.current || (tool !== 'pen' && tool !== 'eraser')) return;
 
+    const point = getPoint(event);
+    expandIfNeeded(point);
+
     const ctx = event.currentTarget.getContext('2d');
     if (!ctx) return;
 
-    const point = getPoint(event);
     const previous = lastPoint.current || point;
 
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
@@ -236,10 +258,11 @@ export function DrawingPad() {
   const stop = (event: React.PointerEvent<HTMLCanvasElement>) => {
     event.preventDefault();
 
-    const ctx = event.currentTarget.getContext('2d');
     const from = startPoint.current;
     const to = getPoint(event);
+    expandIfNeeded(to, shapeExtraSpace());
 
+    const ctx = event.currentTarget.getContext('2d');
     if (ctx && from && tool !== 'pen' && tool !== 'eraser') {
       drawShape(ctx, from, to);
     }
@@ -256,14 +279,9 @@ export function DrawingPad() {
   };
 
   const clear = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, rect.width, CANVAS_HEIGHT);
+    canvasHeightRef.current = INITIAL_CANVAS_HEIGHT;
+    setCanvasHeight(INITIAL_CANVAS_HEIGHT);
+    setupCanvas(false, INITIAL_CANVAS_HEIGHT);
   };
 
   const renderOptions = () => {
@@ -338,7 +356,7 @@ export function DrawingPad() {
         <canvas
           ref={canvasRef}
           className="block cursor-crosshair rounded-lg bg-white touch-none select-none"
-          style={{ touchAction: 'none' }}
+          style={{ touchAction: 'none', height: `${canvasHeight}px` }}
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={stop}
@@ -349,7 +367,7 @@ export function DrawingPad() {
         />
       </div>
       <p className="text-xs text-slate-600">
-        Utilise Stylet pour dessiner librement. Les autres boutons ajoutent rapidement une flèche, une boîte, des groupes, une droite numérique ou un partage.
+        L’espace s’agrandit vers le bas au besoin. Utilise Stylet pour dessiner librement ou ajoute rapidement une flèche, une boîte, des groupes, une droite numérique ou un partage.
       </p>
     </div>
   );
