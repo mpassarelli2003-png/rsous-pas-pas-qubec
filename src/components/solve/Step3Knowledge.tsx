@@ -18,7 +18,7 @@ const labelClass = 'text-xs font-bold uppercase tracking-wide text-slate-500';
 
 const ORGANIZERS: { id: OrganizerId; label: string; icon: JSX.Element; helper: string }[] = [
   { id: 'list', label: 'Liste', icon: <ListTodo className="h-4 w-4" />, helper: 'Données une par ligne' },
-  { id: 'table', label: 'Tableau', icon: <TableIcon className="h-4 w-4" />, helper: 'Donnée / sens / utile' },
+  { id: 'table', label: 'Tableau', icon: <TableIcon className="h-4 w-4" />, helper: 'Info / sens / besoin' },
   { id: 'schema', label: 'Schéma', icon: <Layout className="h-4 w-4" />, helper: 'Groupes ou flèches' },
   { id: 'money', label: 'Argent', icon: <Coins className="h-4 w-4" />, helper: 'Prix et budget' },
   { id: 'clock', label: 'Temps', icon: <Clock className="h-4 w-4" />, helper: 'Heure et durée' },
@@ -200,14 +200,14 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
       return (
         <div className="space-y-3">
           <div className="grid grid-cols-12 gap-2 px-1">
-            <span className={`${labelClass} col-span-4`}>Donnée</span>
-            <span className={`${labelClass} col-span-5`}>Ce que ça veut dire</span>
-            <span className={`${labelClass} col-span-3`}>Utile ?</span>
+            <span className={`${labelClass} col-span-4`}>Info du problème</span>
+            <span className={`${labelClass} col-span-5`}>Ça veut dire…</span>
+            <span className={`${labelClass} col-span-3`}>J’en ai besoin ?</span>
           </div>
           {rows.map((row, index) => (
             <div key={index} className="grid grid-cols-12 gap-2">
-              <input className={`${inputClass} col-span-4`} placeholder="Ex. 8 boîtes" value={row.data} onChange={e => updateRows('table', index, 'data', e.target.value)} />
-              <input className={`${inputClass} col-span-5`} placeholder="Ex. nombre de boîtes" value={row.meaning} onChange={e => updateRows('table', index, 'meaning', e.target.value)} />
+              <input className={`${inputClass} col-span-4`} placeholder="Ex. 245 bouteilles" value={row.data} onChange={e => updateRows('table', index, 'data', e.target.value)} />
+              <input className={`${inputClass} col-span-5`} placeholder="Ex. bouteilles ramassées lundi" value={row.meaning} onChange={e => updateRows('table', index, 'meaning', e.target.value)} />
               <input className={`${inputClass} col-span-3`} placeholder="oui / non" value={row.useful} onChange={e => updateRows('table', index, 'useful', e.target.value)} />
             </div>
           ))}
