@@ -3,6 +3,7 @@ import { Button } from '@/lib/ui';
 
 type Tool = 'move' | 'pen' | 'eraser' | 'arrow' | 'box' | 'groups' | 'numberLine' | 'share';
 type Point = { x: number; y: number };
+type Bounds = { left: number; top: number; right: number; bottom: number };
 type ShapeObject =
   | { id: string; type: 'arrow'; x1: number; y1: number; x2: number; y2: number }
   | { id: string; type: 'box'; x1: number; y1: number; x2: number; y2: number }
@@ -39,21 +40,71 @@ const TOOL_LABELS: Record<Tool, string> = {
 const makeId = () => `shape-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const storageKey = () => `drawing-pad:${window.location.pathname}`;
 
+const getBounds = (shape: ShapeObject): Bounds => {
+  if (shape.type === 'arrow' || shape.type === 'box' || shape.type === 'numberLine') {
+    const pad = 26;
+    return {
+      left: Math.min(shape.x1, shape.x2) - pad,
+      right: Math.max(shape.x1, shape.x2) + pad,
+      top: Math.min(shape.y1, shape.y2) - pad,
+      bottom: Math.max(shape.y1, shape.y2) + pad,
+    };
+  }
+
+  if (shape.type === 'groups') {
+    const columns = Math.min(shape.count, 5);
+    const rows = Math.ceil(shape.count / columns);
+    const totalW = (columns - 1) * 48 + 32;
+    const totalH = (rows - 1) * 42 + 32;
+    return {
+      left: shape.x - totalW / 2 - 12,
+      right: shape.x + totalW / 2 + 12,
+      top: shape.y - totalH / 2 - 12,
+      bottom: shape.y + totalH / 2 + 12,
+    };
+  }
+
+  const columns = Math.min(shape.count, 5);
+  const rows = Math.ceil(shape.count / columns);
+  const totalW = columns * 54 + (columns - 1) * 14;
+  const totalH = rows * 42 + (rows - 1) * 14;
+  return {
+    left: shape.x - totalW / 2 - 12,
+    right: shape.x + totalW / 2 + 12,
+    top: shape.y - totalH / 2 - 12,
+    bottom: shape.y + totalH / 2 + 12,
+  };
+};
+
 export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS_HEIGHT, initialObjects = [], onSave }: DrawingPadProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const isDrawing = useRef(false);
   const startPoint = useRef<Point | null>(null);
   const lastPoint = useRef<Point | null>(null);
-  const selectedId = useRef<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
   const dragLastPoint = useRef<Point | null>(null);
+  const objectsRef = useRef<ShapeObject[]>(initialObjects || []);
   const canvasHeightRef = useRef(Math.max(initialHeight || 0, INITIAL_CANVAS_HEIGHT));
+
   const [canvasHeight, setCanvasHeight] = useState(Math.max(initialHeight || 0, INITIAL_CANVAS_HEIGHT));
   const [tool, setTool] = useState<Tool>('move');
   const [groupCount, setGroupCount] = useState(5);
   const [shareCount, setShareCount] = useState(4);
   const [numberLineTicks, setNumberLineTicks] = useState(5);
   const [objects, setObjects] = useState<ShapeObject[]>(initialObjects || []);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectShape = (id: string | null) => {
+    selectedIdRef.current = id;
+    setSelectedId(id);
+  };
+
+  const setObjectsBoth = (next: ShapeObject[]) => {
+    objectsRef.current = next;
+    setObjects(next);
+  };
 
   const setupCanvas = (height = canvasHeightRef.current, preserve = true) => {
     const canvas = canvasRef.current;
@@ -94,9 +145,8 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
   const loadCanvasImage = (src: string) => {
     if (!src) return;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const img = new Image();
     img.onload = () => {
@@ -107,14 +157,14 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     img.src = src;
   };
 
-  const persist = (nextObjects = objects, height = canvasHeightRef.current) => {
+  const persist = (nextObjects = objectsRef.current, height = canvasHeightRef.current) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
     try {
       sessionStorage.setItem(storageKey(), JSON.stringify({ canvasDataUrl: dataUrl, height, objects: nextObjects }));
     } catch {
-      // La sauvegarde principale par l'application reste active même si sessionStorage est indisponible.
+      // La sauvegarde principale reste active même si sessionStorage est indisponible.
     }
     onSave?.(dataUrl, height, nextObjects);
   };
@@ -137,7 +187,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     }
 
     canvasHeightRef.current = savedHeight;
-    setObjects(savedObjects);
+    setObjectsBoth(savedObjects);
     setupCanvas(savedHeight, false);
     setTimeout(() => loadCanvasImage(savedCanvas), 0);
 
@@ -155,8 +205,9 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
-  const getPointFromSvg = (event: React.PointerEvent<SVGSVGElement>): Point => {
-    const rect = event.currentTarget.getBoundingClientRect();
+  const getPointFromSvgEvent = (event: React.PointerEvent): Point => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
@@ -233,7 +284,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
   const startShape = (event: React.PointerEvent<SVGSVGElement>) => {
     if (tool === 'pen' || tool === 'eraser' || tool === 'move') return;
     event.preventDefault();
-    const point = getPointFromSvg(event);
+    const point = getPointFromSvgEvent(event);
     expandIfNeeded(point, shapeExtra());
     event.currentTarget.setPointerCapture(event.pointerId);
     isDrawing.current = true;
@@ -244,14 +295,14 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (!isDrawing.current || tool === 'pen' || tool === 'eraser' || tool === 'move') return;
     event.preventDefault();
     const from = startPoint.current;
-    const to = getPointFromSvg(event);
+    const to = getPointFromSvgEvent(event);
     expandIfNeeded(to, shapeExtra());
     if (from) {
       const shape = makeShape(from, to);
       if (shape) {
-        const next = [...objects, shape];
-        selectedId.current = shape.id;
-        setObjects(next);
+        const next = [...objectsRef.current, shape];
+        selectShape(shape.id);
+        setObjectsBoth(next);
         persist(next);
       }
     }
@@ -264,36 +315,42 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (tool !== 'move') return;
     event.preventDefault();
     event.stopPropagation();
-    selectedId.current = id;
-    dragLastPoint.current = getPointFromSvg(event as unknown as React.PointerEvent<SVGSVGElement>);
+    selectShape(id);
+    dragLastPoint.current = getPointFromSvgEvent(event);
     isDrawing.current = true;
+    svgRef.current?.setPointerCapture(event.pointerId);
   };
 
   const moveShape = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (tool !== 'move' || !isDrawing.current || !selectedId.current || !dragLastPoint.current) return;
+    if (tool !== 'move' || !isDrawing.current || !selectedIdRef.current || !dragLastPoint.current) return;
     event.preventDefault();
-    const point = getPointFromSvg(event);
+    const point = getPointFromSvgEvent(event);
     const dx = point.x - dragLastPoint.current.x;
     const dy = point.y - dragLastPoint.current.y;
     dragLastPoint.current = point;
     expandIfNeeded(point, 80);
-    setObjects(prev => prev.map(shape => {
-      if (shape.id !== selectedId.current) return shape;
+
+    const next = objectsRef.current.map(shape => {
+      if (shape.id !== selectedIdRef.current) return shape;
       if (shape.type === 'groups' || shape.type === 'share') return { ...shape, x: shape.x + dx, y: shape.y + dy };
       return { ...shape, x1: shape.x1 + dx, y1: shape.y1 + dy, x2: shape.x2 + dx, y2: shape.y2 + dy };
-    }));
+    });
+    setObjectsBoth(next);
   };
 
-  const stopMove = () => {
+  const stopMove = (event?: React.PointerEvent<SVGSVGElement>) => {
     if (tool !== 'move') return;
     isDrawing.current = false;
     dragLastPoint.current = null;
-    persist(objects);
+    persist(objectsRef.current);
+    if (event) {
+      try { event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* déjà relâché */ }
+    }
   };
 
   const clear = () => {
-    selectedId.current = null;
-    setObjects([]);
+    selectShape(null);
+    setObjectsBoth([]);
     canvasHeightRef.current = INITIAL_CANVAS_HEIGHT;
     setupCanvas(INITIAL_CANVAS_HEIGHT, false);
     try { sessionStorage.removeItem(storageKey()); } catch { /* rien */ }
@@ -304,7 +361,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (tool === 'groups') return <OptionRow label="Groupes" values={GROUP_OPTIONS} value={groupCount} onChange={setGroupCount} />;
     if (tool === 'share') return <OptionRow label="Partager en" values={SHARE_OPTIONS} value={shareCount} onChange={setShareCount} />;
     if (tool === 'numberLine') return <OptionRow label="Repères" values={NUMBER_LINE_OPTIONS} value={numberLineTicks} onChange={setNumberLineTicks} />;
-    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique sur une forme guidée, puis glisse-la pour la déplacer. Les traits au stylet ne se déplacent pas.</div>;
+    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner. Garde le doigt ou la souris dessus, puis glisse-la.</div>;
     return null;
   };
 
@@ -333,28 +390,34 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           onPointerCancel={stopPen}
         />
         <svg
+          ref={svgRef}
           className="absolute left-2 top-2 w-[calc(100%-1rem)] touch-none select-none"
           style={{ height: `${canvasHeight}px`, pointerEvents: tool === 'pen' || tool === 'eraser' ? 'none' : 'auto' }}
-          onPointerDown={startShape}
+          onPointerDown={(event) => { if (tool === 'move') selectShape(null); startShape(event); }}
           onPointerMove={moveShape}
-          onPointerUp={(event) => { stopShape(event); stopMove(); }}
-          onPointerCancel={() => { isDrawing.current = false; dragLastPoint.current = null; }}
+          onPointerUp={(event) => { stopShape(event); stopMove(event); }}
+          onPointerCancel={(event) => { isDrawing.current = false; dragLastPoint.current = null; stopMove(event); }}
         >
-          {objects.map(shape => <ShapeView key={shape.id} shape={shape} selected={selectedId.current === shape.id} onPointerDown={(event) => startMove(event, shape.id)} />)}
+          {objects.map(shape => <ShapeView key={shape.id} shape={shape} selected={selectedId === shape.id} onPointerDown={(event) => startMove(event, shape.id)} />)}
         </svg>
       </div>
-      <p className="text-xs text-slate-600">Croquis hybride : stylet libre dans le canvas, formes guidées déplaçables par-dessus.</p>
+      <p className="text-xs text-slate-600">Les formes guidées se sélectionnent puis se déplacent. Les traits au stylet restent comme dessin libre.</p>
     </div>
   );
 }
 
+function HitBox({ bounds }: { bounds: Bounds }) {
+  return <rect x={bounds.left} y={bounds.top} width={bounds.right - bounds.left} height={bounds.bottom - bounds.top} fill="transparent" pointerEvents="all" />;
+}
+
 function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; selected: boolean; onPointerDown: (event: React.PointerEvent<SVGGElement>) => void }) {
   const strokeWidth = selected ? 4 : 3;
-  const common = { stroke: '#0f172a', strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const common = { stroke: '#0f172a', strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, pointerEvents: 'none' as const };
+  const selectedBox = selected ? <rect {...getBounds(shape)} x={getBounds(shape).left} y={getBounds(shape).top} width={getBounds(shape).right - getBounds(shape).left} height={getBounds(shape).bottom - getBounds(shape).top} fill="none" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null;
 
   if (shape.type === 'arrow') {
     const markerId = `arrow-${shape.id}`;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} {...common} markerEnd={`url(#${markerId})`} /></g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} {...common} markerEnd={`url(#${markerId})`} /></g>;
   }
 
   if (shape.type === 'box') {
@@ -362,7 +425,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const y = Math.min(shape.y1, shape.y2);
     const width = Math.max(Math.abs(shape.x2 - shape.x1), 44);
     const height = Math.max(Math.abs(shape.y2 - shape.y1), 32);
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><rect x={x} y={y} width={width} height={height} {...common} /></g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<rect x={x} y={y} width={width} height={height} {...common} /></g>;
   }
 
   if (shape.type === 'groups') {
@@ -370,7 +433,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const rows = Math.ceil(shape.count / columns);
     const startX = shape.x - ((columns - 1) * 48) / 2;
     const startY = shape.y - ((rows - 1) * 42) / 2;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}>{Array.from({ length: shape.count }).map((_, i) => <circle key={i} cx={startX + (i % columns) * 48} cy={startY + Math.floor(i / columns) * 42} r={16} {...common} />)}</g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <circle key={i} cx={startX + (i % columns) * 48} cy={startY + Math.floor(i / columns) * 42} r={16} {...common} />)}</g>;
   }
 
   if (shape.type === 'numberLine') {
@@ -378,7 +441,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const left = Math.min(shape.x1, shape.x2);
     const width = Math.max(Math.abs(shape.x2 - shape.x1), 160);
     const right = left + width;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={left} y1={shape.y1} x2={right} y2={shape.y1} {...common} markerEnd={`url(#${markerId})`} />{Array.from({ length: shape.ticks + 1 }).map((_, i) => { const x = left + (width / shape.ticks) * i; return <line key={i} x1={x} y1={shape.y1 - 8} x2={x} y2={shape.y1 + 8} {...common} />; })}</g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={left} y1={shape.y1} x2={right} y2={shape.y1} {...common} markerEnd={`url(#${markerId})`} />{Array.from({ length: shape.ticks + 1 }).map((_, i) => { const x = left + (width / shape.ticks) * i; return <line key={i} x1={x} y1={shape.y1 - 8} x2={x} y2={shape.y1 + 8} {...common} />; })}</g>;
   }
 
   const columns = Math.min(shape.count, 5);
@@ -387,7 +450,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
   const totalH = rows * 42 + (rows - 1) * 14;
   const startX = shape.x - totalW / 2;
   const startY = shape.y - totalH / 2;
-  return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}>{Array.from({ length: shape.count }).map((_, i) => <rect key={i} x={startX + (i % columns) * 68} y={startY + Math.floor(i / columns) * 56} width={54} height={42} {...common} />)}</g>;
+  return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <rect key={i} x={startX + (i % columns) * 68} y={startY + Math.floor(i / columns) * 56} width={54} height={42} {...common} />)}</g>;
 }
 
 function OptionRow({ label, values, value, onChange }: { label: string; values: number[]; value: number; onChange: (value: number) => void }) {
