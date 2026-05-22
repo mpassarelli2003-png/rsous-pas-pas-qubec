@@ -1,60 +1,120 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/lib/ui';
 
 type Tool = 'pen' | 'eraser';
 
+const CANVAS_HEIGHT = 260;
+
 export function DrawingPad() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isDrawing = useRef(false);
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const [tool, setTool] = useState<Tool>('pen');
+
+  const setupCanvas = (preserve = true) => {
+    const canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    const width = Math.max(Math.floor(rect.width), 320);
+    const height = CANVAS_HEIGHT;
+    const dpr = window.devicePixelRatio || 1;
+    const previousImage = preserve && canvas.width > 0 ? canvas.toDataURL('image/png') : '';
+
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    if (previousImage) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.drawImage(img, 0, 0, width, height);
+      };
+      img.src = previousImage;
+    }
+  };
+
+  useEffect(() => {
+    setupCanvas(false);
+
+    const wrapper = wrapperRef.current;
+    if (!wrapper || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(() => {
+      if (!isDrawing.current) setupCanvas(true);
+    });
+
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, []);
 
   const getPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
-  };
-
-  const setupIfNeeded = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || canvas.width > 0) return;
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(260 * dpr);
-    canvas.style.height = '260px';
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, rect.width, 260);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
   };
 
   const start = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    setupIfNeeded();
-    const ctx = event.currentTarget.getContext('2d');
+    event.preventDefault();
+    setupCanvas(true);
+
+    const canvas = event.currentTarget;
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
+
+    canvas.setPointerCapture(event.pointerId);
     const point = getPoint(event);
     isDrawing.current = true;
+    lastPoint.current = point;
+
     ctx.beginPath();
     ctx.moveTo(point.x, point.y);
-  };
-
-  const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawing.current) return;
-    const ctx = event.currentTarget.getContext('2d');
-    if (!ctx) return;
-    const point = getPoint(event);
-    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = tool === 'eraser' ? 18 : 3;
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
   };
 
+  const move = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
+    if (!isDrawing.current) return;
+
+    const ctx = event.currentTarget.getContext('2d');
+    if (!ctx) return;
+
+    const point = getPoint(event);
+    const previous = lastPoint.current || point;
+
+    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+
+    ctx.beginPath();
+    ctx.moveTo(previous.x, previous.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+
+    lastPoint.current = point;
+  };
+
   const stop = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    event.preventDefault();
     isDrawing.current = false;
+    lastPoint.current = null;
+
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {
@@ -66,10 +126,11 @@ export function DrawingPad() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
+
     const rect = canvas.getBoundingClientRect();
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, rect.width, 260);
+    ctx.fillRect(0, 0, rect.width, CANVAS_HEIGHT);
   };
 
   return (
@@ -79,16 +140,18 @@ export function DrawingPad() {
         <Button type="button" variant={tool === 'eraser' ? 'primary' : 'outline'} size="sm" onClick={() => setTool('eraser')}>Gomme</Button>
         <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
       </div>
-      <div className="rounded-xl border-2 border-primary/30 bg-white p-2 shadow-inner">
+      <div ref={wrapperRef} className="w-full rounded-xl border-2 border-primary/30 bg-white p-2 shadow-inner overflow-hidden">
         <canvas
           ref={canvasRef}
-          className="block w-full cursor-crosshair rounded-lg bg-white touch-none"
+          className="block cursor-crosshair rounded-lg bg-white touch-none select-none"
           style={{ touchAction: 'none' }}
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={stop}
           onPointerCancel={stop}
-          onPointerEnter={setupIfNeeded}
+          onPointerLeave={(event) => {
+            if (isDrawing.current) stop(event);
+          }}
         />
       </div>
       <p className="text-xs text-slate-600">Dessine des groupes, des flèches, des boîtes, une droite numérique ou un partage rapide.</p>
