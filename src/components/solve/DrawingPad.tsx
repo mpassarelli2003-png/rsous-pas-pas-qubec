@@ -10,6 +10,12 @@ type CanvasSnapshot = {
   height: number;
 };
 
+interface DrawingPadProps {
+  initialDataUrl?: string;
+  initialHeight?: number;
+  onSave?: (dataUrl: string, height: number) => void;
+}
+
 const INITIAL_CANVAS_HEIGHT = 260;
 const EXPAND_STEP = 180;
 const EXPAND_MARGIN = 52;
@@ -27,18 +33,25 @@ const TOOL_LABELS: Record<Tool, string> = {
   share: 'Partage',
 };
 
-export function DrawingPad() {
+export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS_HEIGHT, onSave }: DrawingPadProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
   const startPoint = useRef<Point | null>(null);
-  const canvasHeightRef = useRef(INITIAL_CANVAS_HEIGHT);
-  const [canvasHeight, setCanvasHeight] = useState(INITIAL_CANVAS_HEIGHT);
+  const canvasHeightRef = useRef(Math.max(initialHeight, INITIAL_CANVAS_HEIGHT));
+  const initialDataLoadedRef = useRef(false);
+  const [canvasHeight, setCanvasHeight] = useState(Math.max(initialHeight, INITIAL_CANVAS_HEIGHT));
   const [tool, setTool] = useState<Tool>('pen');
   const [groupCount, setGroupCount] = useState(5);
   const [shareCount, setShareCount] = useState(4);
   const [numberLineTicks, setNumberLineTicks] = useState(5);
+
+  const saveCanvas = (height = canvasHeightRef.current) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !onSave) return;
+    onSave(canvas.toDataURL('image/png'), height);
+  };
 
   const captureCanvas = (): CanvasSnapshot | null => {
     const canvas = canvasRef.current;
@@ -54,6 +67,19 @@ export function DrawingPad() {
     return { canvas: snapshot, width: canvas.width, height: canvas.height };
   };
 
+  const drawInitialData = (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, dpr: number) => {
+    if (!initialDataUrl || initialDataLoadedRef.current) return;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(img, 0, 0, Math.min(img.width, canvas.width), Math.min(img.height, canvas.height));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initialDataLoadedRef.current = true;
+    };
+    img.src = initialDataUrl;
+  };
+
   const setupCanvas = (preserve = true, nextHeight = canvasHeightRef.current) => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
@@ -61,7 +87,7 @@ export function DrawingPad() {
 
     const rect = wrapper.getBoundingClientRect();
     const width = Math.max(Math.floor(rect.width), 320);
-    const height = nextHeight;
+    const height = Math.max(nextHeight, INITIAL_CANVAS_HEIGHT);
     const dpr = window.devicePixelRatio || 1;
     const snapshot = preserve ? captureCanvas() : null;
 
@@ -75,8 +101,6 @@ export function DrawingPad() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Important : on copie l’ancien dessin en pixels réels, sans l’étirer.
-    // Sinon, lorsque la hauteur du tableau augmente, les chiffres déjà écrits se déforment.
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = '#ffffff';
@@ -84,6 +108,8 @@ export function DrawingPad() {
 
     if (snapshot) {
       ctx.drawImage(snapshot.canvas, 0, 0, snapshot.width, snapshot.height);
+    } else {
+      drawInitialData(ctx, canvas, dpr);
     }
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -100,7 +126,7 @@ export function DrawingPad() {
   };
 
   useEffect(() => {
-    setupCanvas(false);
+    setupCanvas(false, Math.max(initialHeight, INITIAL_CANVAS_HEIGHT));
 
     const wrapper = wrapperRef.current;
     if (!wrapper || typeof ResizeObserver === 'undefined') return;
@@ -300,6 +326,7 @@ export function DrawingPad() {
     isDrawing.current = false;
     lastPoint.current = null;
     startPoint.current = null;
+    saveCanvas();
 
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -309,9 +336,11 @@ export function DrawingPad() {
   };
 
   const clear = () => {
+    initialDataLoadedRef.current = true;
     canvasHeightRef.current = INITIAL_CANVAS_HEIGHT;
     setCanvasHeight(INITIAL_CANVAS_HEIGHT);
     setupCanvas(false, INITIAL_CANVAS_HEIGHT);
+    onSave?.('', INITIAL_CANVAS_HEIGHT);
   };
 
   const renderOptions = () => {
@@ -397,7 +426,7 @@ export function DrawingPad() {
         />
       </div>
       <p className="text-xs text-slate-600">
-        L’espace s’agrandit vers le bas au besoin. Les éléments déjà écrits ne devraient plus se déformer lors de l’agrandissement.
+        Ton croquis est conservé quand tu changes d’onglet. L’espace s’agrandit vers le bas au besoin.
       </p>
     </div>
   );
