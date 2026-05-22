@@ -4,6 +4,12 @@ import { Button } from '@/lib/ui';
 type Tool = 'pen' | 'eraser' | 'arrow' | 'box' | 'groups' | 'numberLine' | 'share';
 type Point = { x: number; y: number };
 
+type CanvasSnapshot = {
+  canvas: HTMLCanvasElement;
+  width: number;
+  height: number;
+};
+
 const INITIAL_CANVAS_HEIGHT = 260;
 const EXPAND_STEP = 180;
 const EXPAND_MARGIN = 52;
@@ -34,6 +40,20 @@ export function DrawingPad() {
   const [shareCount, setShareCount] = useState(4);
   const [numberLineTicks, setNumberLineTicks] = useState(5);
 
+  const captureCanvas = (): CanvasSnapshot | null => {
+    const canvas = canvasRef.current;
+    if (!canvas || canvas.width === 0 || canvas.height === 0) return null;
+
+    const snapshot = document.createElement('canvas');
+    snapshot.width = canvas.width;
+    snapshot.height = canvas.height;
+    const snapshotCtx = snapshot.getContext('2d');
+    if (!snapshotCtx) return null;
+
+    snapshotCtx.drawImage(canvas, 0, 0);
+    return { canvas: snapshot, width: canvas.width, height: canvas.height };
+  };
+
   const setupCanvas = (preserve = true, nextHeight = canvasHeightRef.current) => {
     const canvas = canvasRef.current;
     const wrapper = wrapperRef.current;
@@ -43,7 +63,7 @@ export function DrawingPad() {
     const width = Math.max(Math.floor(rect.width), 320);
     const height = nextHeight;
     const dpr = window.devicePixelRatio || 1;
-    const previousImage = preserve && canvas.width > 0 ? canvas.toDataURL('image/png') : '';
+    const snapshot = preserve ? captureCanvas() : null;
 
     canvasHeightRef.current = height;
     setCanvasHeight(height);
@@ -55,20 +75,20 @@ export function DrawingPad() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Important : on copie l’ancien dessin en pixels réels, sans l’étirer.
+    // Sinon, lorsque la hauteur du tableau augmente, les chiffres déjà écrits se déforment.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (snapshot) {
+      ctx.drawImage(snapshot.canvas, 0, 0, snapshot.width, snapshot.height);
+    }
+
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-
-    if (previousImage) {
-      const img = new Image();
-      img.onload = () => {
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.drawImage(img, 0, 0, width, Math.min(height, img.height));
-      };
-      img.src = previousImage;
-    }
   };
 
   const expandIfNeeded = (point: Point, extraSpace = 0) => {
@@ -106,6 +126,8 @@ export function DrawingPad() {
     ctx.strokeStyle = '#0f172a';
     ctx.fillStyle = '#0f172a';
     ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
   };
 
   const drawArrow = (ctx: CanvasRenderingContext2D, from: Point, to: Point) => {
@@ -213,17 +235,23 @@ export function DrawingPad() {
     event.preventDefault();
 
     const canvas = event.currentTarget;
+    const point = getPoint(event);
+    expandIfNeeded(point, shapeExtraSpace());
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     canvas.setPointerCapture(event.pointerId);
-    const point = getPoint(event);
-    expandIfNeeded(point, shapeExtraSpace());
     isDrawing.current = true;
     lastPoint.current = point;
     startPoint.current = point;
 
     if (tool === 'pen' || tool === 'eraser') {
+      ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(point.x, point.y);
       ctx.lineTo(point.x, point.y);
@@ -246,6 +274,8 @@ export function DrawingPad() {
     ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     ctx.beginPath();
     ctx.moveTo(previous.x, previous.y);
@@ -367,7 +397,7 @@ export function DrawingPad() {
         />
       </div>
       <p className="text-xs text-slate-600">
-        L’espace s’agrandit vers le bas au besoin. Utilise Stylet pour dessiner librement ou ajoute rapidement une flèche, une boîte, des groupes, une droite numérique ou un partage.
+        L’espace s’agrandit vers le bas au besoin. Les éléments déjà écrits ne devraient plus se déformer lors de l’agrandissement.
       </p>
     </div>
   );
