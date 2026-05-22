@@ -109,6 +109,18 @@ const HELP_CONTENT: Record<string, { title: string; steps: string[]; example: st
   },
 };
 
+function buildPlanPreview(rows: PlanRow[]) {
+  const filledRows = rows
+    .map((row, index) => ({ ...row, index }))
+    .filter(row => row.action?.trim());
+
+  if (filledRows.length === 0) return '';
+
+  return filledRows
+    .map(row => ` Étape ${row.index + 1} : ${row.action.trim()}.`)
+    .join('');
+}
+
 export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4PlanProps) {
   const [selectedOps, setSelectedOps] = useState<string[]>(savedData?.selectedOps || []);
   const [estimation, setEstimation] = useState(savedData?.estimation || '');
@@ -196,6 +208,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
   const estimationType = inferEstimationType(problem);
   const help = HELP_CONTENT[estimationType] || HELP_CONTENT.arithmetique;
   const problemHints = problem?.hints ?? undefined;
+  const planPreview = buildPlanPreview(planRows);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
@@ -279,7 +292,7 @@ export function Step4Plan({ problem, onUpdate, savedData, step3Data }: Step4Plan
           </Card>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-dashed"><h3 className="text-xl font-bold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Mon plan final</h3><Card className="p-6 bg-primary/5 border-2 border-primary/20 italic"><p className="text-base text-primary/80 leading-relaxed">"Pour résoudre ce problème, je vais effectuer <strong>{planRows.length}</strong> étape{planRows.length > 1 ? 's' : ''}.{planRows[0]?.action ? ` D'abord : ${planRows[0].action}.` : ''}{planRows[1]?.action ? ` Ensuite : ${planRows[1].action}.` : ''}{planRows[2]?.action ? ` Finalement : ${planRows[2].action}.` : ''} Je pense que ma réponse sera environ <strong>{estimation || '_______'}</strong>."</p></Card></section>
+        <section className="space-y-4 pt-6 border-t border-dashed"><h3 className="text-xl font-bold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Mon plan final</h3><Card className="p-6 bg-primary/5 border-2 border-primary/20 italic"><p className="text-base text-primary/80 leading-relaxed">"Pour résoudre ce problème, je vais effectuer <strong>{planRows.length}</strong> étape{planRows.length > 1 ? 's' : ''}.{planPreview || ' Je vais écrire mon plan dans le tableau.'} Je pense que ma réponse sera environ <strong>{estimation || '_______'}</strong>."</p></Card></section>
       </div>
 
       {showEstimationHelp && (
