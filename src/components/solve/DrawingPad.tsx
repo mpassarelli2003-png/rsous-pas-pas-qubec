@@ -5,6 +5,9 @@ type Tool = 'pen' | 'eraser' | 'arrow' | 'box' | 'groups' | 'numberLine' | 'shar
 type Point = { x: number; y: number };
 
 const CANVAS_HEIGHT = 260;
+const GROUP_OPTIONS = [2, 3, 4, 5, 10];
+const SHARE_OPTIONS = [2, 3, 4, 5, 10];
+const NUMBER_LINE_OPTIONS = [5, 10];
 
 const TOOL_LABELS: Record<Tool, string> = {
   pen: 'Stylet',
@@ -23,6 +26,9 @@ export function DrawingPad() {
   const lastPoint = useRef<Point | null>(null);
   const startPoint = useRef<Point | null>(null);
   const [tool, setTool] = useState<Tool>('pen');
+  const [groupCount, setGroupCount] = useState(5);
+  const [shareCount, setShareCount] = useState(4);
+  const [numberLineTicks, setNumberLineTicks] = useState(5);
 
   const setupCanvas = (preserve = true) => {
     const canvas = canvasRef.current;
@@ -118,16 +124,21 @@ export function DrawingPad() {
   const drawGroups = (ctx: CanvasRenderingContext2D, center: Point) => {
     setStroke(ctx, 3);
     const radius = 16;
-    const gap = 48;
-    const startX = center.x - gap;
-    const startY = center.y - 20;
+    const gapX = 48;
+    const gapY = 42;
+    const columns = Math.min(groupCount, 5);
+    const rows = Math.ceil(groupCount / columns);
+    const totalW = (columns - 1) * gapX;
+    const totalH = (rows - 1) * gapY;
+    const startX = center.x - totalW / 2;
+    const startY = center.y - totalH / 2;
 
-    for (let row = 0; row < 2; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        ctx.beginPath();
-        ctx.arc(startX + col * gap, startY + row * 42, radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+    for (let i = 0; i < groupCount; i += 1) {
+      const col = i % columns;
+      const row = Math.floor(i / columns);
+      ctx.beginPath();
+      ctx.arc(startX + col * gapX, startY + row * gapY, radius, 0, Math.PI * 2);
+      ctx.stroke();
     }
   };
 
@@ -142,8 +153,8 @@ export function DrawingPad() {
 
     drawArrow(ctx, { x: left, y }, { x: right, y });
 
-    for (let i = 0; i <= 5; i += 1) {
-      const x = left + (width / 5) * i;
+    for (let i = 0; i <= numberLineTicks; i += 1) {
+      const x = left + (width / numberLineTicks) * i;
       ctx.beginPath();
       ctx.moveTo(x, y - 8);
       ctx.lineTo(x, y + 8);
@@ -153,15 +164,20 @@ export function DrawingPad() {
 
   const drawShare = (ctx: CanvasRenderingContext2D, center: Point) => {
     setStroke(ctx, 3);
-    const boxW = 58;
+    const boxW = 54;
     const boxH = 42;
-    const gap = 18;
-    const totalW = boxW * 4 + gap * 3;
+    const gap = 14;
+    const columns = Math.min(shareCount, 5);
+    const rows = Math.ceil(shareCount / columns);
+    const totalW = columns * boxW + (columns - 1) * gap;
+    const totalH = rows * boxH + (rows - 1) * gap;
     const startX = center.x - totalW / 2;
-    const y = center.y - boxH / 2;
+    const startY = center.y - totalH / 2;
 
-    for (let i = 0; i < 4; i += 1) {
-      ctx.strokeRect(startX + i * (boxW + gap), y, boxW, boxH);
+    for (let i = 0; i < shareCount; i += 1) {
+      const col = i % columns;
+      const row = Math.floor(i / columns);
+      ctx.strokeRect(startX + col * (boxW + gap), startY + row * (boxH + gap), boxW, boxH);
     }
   };
 
@@ -250,6 +266,55 @@ export function DrawingPad() {
     ctx.fillRect(0, 0, rect.width, CANVAS_HEIGHT);
   };
 
+  const renderOptions = () => {
+    if (tool === 'groups') {
+      return (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm">
+          <span className="mr-2 font-semibold text-blue-900">Groupes :</span>
+          <div className="mt-2 flex flex-wrap gap-2 sm:inline-flex sm:mt-0">
+            {GROUP_OPTIONS.map(value => (
+              <button key={value} type="button" onClick={() => setGroupCount(value)} className={`rounded-md border px-3 py-1 font-bold ${groupCount === value ? 'border-primary bg-primary text-white' : 'border-blue-200 bg-white text-blue-900'}`}>
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tool === 'share') {
+      return (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm">
+          <span className="mr-2 font-semibold text-blue-900">Partager en :</span>
+          <div className="mt-2 flex flex-wrap gap-2 sm:inline-flex sm:mt-0">
+            {SHARE_OPTIONS.map(value => (
+              <button key={value} type="button" onClick={() => setShareCount(value)} className={`rounded-md border px-3 py-1 font-bold ${shareCount === value ? 'border-primary bg-primary text-white' : 'border-blue-200 bg-white text-blue-900'}`}>
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (tool === 'numberLine') {
+      return (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm">
+          <span className="mr-2 font-semibold text-blue-900">Repères :</span>
+          <div className="mt-2 flex flex-wrap gap-2 sm:inline-flex sm:mt-0">
+            {NUMBER_LINE_OPTIONS.map(value => (
+              <button key={value} type="button" onClick={() => setNumberLineTicks(value)} className={`rounded-md border px-3 py-1 font-bold ${numberLineTicks === value ? 'border-primary bg-primary text-white' : 'border-blue-200 bg-white text-blue-900'}`}>
+                {value}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-3">
       <div className="space-y-2">
@@ -266,6 +331,7 @@ export function DrawingPad() {
             </Button>
           ))}
         </div>
+        {renderOptions()}
         <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
       </div>
       <div ref={wrapperRef} className="w-full rounded-xl border-2 border-primary/30 bg-white p-2 shadow-inner overflow-hidden">
