@@ -118,6 +118,12 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
     emitUpdate(id, important, workspace);
   };
 
+  const handleDrawingSave = (dataUrl: string, height: number) => {
+    const nextWorkspace = { ...workspace, schemaDrawing: dataUrl, schemaDrawingHeight: height };
+    setWorkspace(nextWorkspace);
+    emitUpdate(organizer, important, nextWorkspace);
+  };
+
   const getListRows = (): Row[] => {
     if (workspace.list) return workspace.list;
     if (important && organizer === 'list') {
@@ -319,7 +325,7 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
           <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-900">
             Fais un croquis rapide pour montrer les groupes, les parties ou ce qui change. Tu peux aussi écrire une courte explication sous le dessin.
           </div>
-          <DrawingPad />
+          <DrawingPad initialDataUrl={workspace.schemaDrawing} initialHeight={workspace.schemaDrawingHeight} onSave={handleDrawingSave} />
           <Textarea
             placeholder={'Mon croquis veut dire...\nEx. : 245 bouteilles → +138 bouteilles → +27 bouteilles → total ?\nEx. : 120 pommes partagées en 4 paniers'}
             className="min-h-[120px] resize-none border-2 border-primary/20 focus:border-primary bg-white text-sm"
