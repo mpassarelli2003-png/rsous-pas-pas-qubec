@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Textarea } from '@/lib/ui';
 import { ListTodo, Layout, Table as TableIcon, Coins, Clock, Square, CheckCircle2, Plus, Trash2, Highlighter, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DrawingPad } from './DrawingPad';
 
 interface Step3KnowledgeProps {
   problem: any;
@@ -19,7 +20,7 @@ const labelClass = 'text-xs font-bold uppercase tracking-wide text-slate-500';
 const ORGANIZERS: { id: OrganizerId; label: string; icon: JSX.Element; helper: string }[] = [
   { id: 'list', label: 'Liste', icon: <ListTodo className="h-4 w-4" />, helper: 'Données une par ligne' },
   { id: 'table', label: 'Tableau', icon: <TableIcon className="h-4 w-4" />, helper: 'Info / sens / besoin' },
-  { id: 'schema', label: 'Schéma', icon: <Layout className="h-4 w-4" />, helper: 'Groupes ou flèches' },
+  { id: 'schema', label: 'Croquis', icon: <Layout className="h-4 w-4" />, helper: 'Dessiner ou flèches' },
   { id: 'money', label: 'Argent', icon: <Coins className="h-4 w-4" />, helper: 'Prix et budget' },
   { id: 'clock', label: 'Temps', icon: <Clock className="h-4 w-4" />, helper: 'Heure et durée' },
   { id: 'shape', label: 'Géométrie', icon: <Square className="h-4 w-4" />, helper: 'Mesures et formule' },
@@ -314,12 +315,18 @@ export function Step3Knowledge({ problem, onUpdate, savedData, highlightedTokenI
 
     if (organizer === 'schema') {
       return (
-        <Textarea
-          placeholder={'Ex. :\n8 boîtes → 24 crayons dans chaque boîte\nTotal de crayons → enlever 36 crayons\nReste → partager en 6 équipes'}
-          className="min-h-[190px] resize-none border-2 border-primary/20 focus:border-primary bg-white font-mono text-sm"
-          value={important}
-          onChange={(e) => handleTextChange(e.target.value)}
-        />
+        <div className="space-y-4">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-900">
+            Fais un croquis rapide pour montrer les groupes, les parties ou ce qui change. Tu peux aussi écrire une courte explication sous le dessin.
+          </div>
+          <DrawingPad />
+          <Textarea
+            placeholder={'Mon croquis veut dire...\nEx. : 245 bouteilles → +138 bouteilles → +27 bouteilles → total ?\nEx. : 120 pommes partagées en 4 paniers'}
+            className="min-h-[120px] resize-none border-2 border-primary/20 focus:border-primary bg-white text-sm"
+            value={important}
+            onChange={(e) => handleTextChange(e.target.value)}
+          />
+        </div>
       );
     }
 
