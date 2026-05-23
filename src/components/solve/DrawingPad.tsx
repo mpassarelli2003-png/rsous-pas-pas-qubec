@@ -413,11 +413,12 @@ function HitBox({ bounds }: { bounds: Bounds }) {
 function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; selected: boolean; onPointerDown: (event: React.PointerEvent<SVGGElement>) => void }) {
   const strokeWidth = selected ? 4 : 3;
   const common = { stroke: '#0f172a', strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, pointerEvents: 'none' as const };
-  const selectedBox = selected ? <rect {...getBounds(shape)} x={getBounds(shape).left} y={getBounds(shape).top} width={getBounds(shape).right - getBounds(shape).left} height={getBounds(shape).bottom - getBounds(shape).top} fill="none" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null;
+  const bounds = getBounds(shape);
+  const selectedBox = selected ? <rect x={bounds.left} y={bounds.top} width={bounds.right - bounds.left} height={bounds.bottom - bounds.top} fill="none" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null;
 
   if (shape.type === 'arrow') {
     const markerId = `arrow-${shape.id}`;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} {...common} markerEnd={`url(#${markerId})`} /></g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={bounds} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={shape.x1} y1={shape.y1} x2={shape.x2} y2={shape.y2} {...common} markerEnd={`url(#${markerId})`} /></g>;
   }
 
   if (shape.type === 'box') {
@@ -425,7 +426,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const y = Math.min(shape.y1, shape.y2);
     const width = Math.max(Math.abs(shape.x2 - shape.x1), 44);
     const height = Math.max(Math.abs(shape.y2 - shape.y1), 32);
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<rect x={x} y={y} width={width} height={height} {...common} /></g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={bounds} />{selectedBox}<rect x={x} y={y} width={width} height={height} {...common} /></g>;
   }
 
   if (shape.type === 'groups') {
@@ -433,7 +434,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const rows = Math.ceil(shape.count / columns);
     const startX = shape.x - ((columns - 1) * 48) / 2;
     const startY = shape.y - ((rows - 1) * 42) / 2;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <circle key={i} cx={startX + (i % columns) * 48} cy={startY + Math.floor(i / columns) * 42} r={16} {...common} />)}</g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={bounds} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <circle key={i} cx={startX + (i % columns) * 48} cy={startY + Math.floor(i / columns) * 42} r={16} {...common} />)}</g>;
   }
 
   if (shape.type === 'numberLine') {
@@ -441,7 +442,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
     const left = Math.min(shape.x1, shape.x2);
     const width = Math.max(Math.abs(shape.x2 - shape.x1), 160);
     const right = left + width;
-    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={left} y1={shape.y1} x2={right} y2={shape.y1} {...common} markerEnd={`url(#${markerId})`} />{Array.from({ length: shape.ticks + 1 }).map((_, i) => { const x = left + (width / shape.ticks) * i; return <line key={i} x1={x} y1={shape.y1 - 8} x2={x} y2={shape.y1 + 8} {...common} />; })}</g>;
+    return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={bounds} />{selectedBox}<defs><marker id={markerId} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0f172a" /></marker></defs><line x1={left} y1={shape.y1} x2={right} y2={shape.y1} {...common} markerEnd={`url(#${markerId})`} />{Array.from({ length: shape.ticks + 1 }).map((_, i) => { const x = left + (width / shape.ticks) * i; return <line key={i} x1={x} y1={shape.y1 - 8} x2={x} y2={shape.y1 + 8} {...common} />; })}</g>;
   }
 
   const columns = Math.min(shape.count, 5);
@@ -450,7 +451,7 @@ function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; sel
   const totalH = rows * 42 + (rows - 1) * 14;
   const startX = shape.x - totalW / 2;
   const startY = shape.y - totalH / 2;
-  return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={getBounds(shape)} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <rect key={i} x={startX + (i % columns) * 68} y={startY + Math.floor(i / columns) * 56} width={54} height={42} {...common} />)}</g>;
+  return <g onPointerDown={onPointerDown} style={{ cursor: 'move' }}><HitBox bounds={bounds} />{selectedBox}{Array.from({ length: shape.count }).map((_, i) => <rect key={i} x={startX + (i % columns) * 68} y={startY + Math.floor(i / columns) * 56} width={54} height={42} {...common} />)}</g>;
 }
 
 function OptionRow({ label, values, value, onChange }: { label: string; values: number[]; value: number; onChange: (value: number) => void }) {
