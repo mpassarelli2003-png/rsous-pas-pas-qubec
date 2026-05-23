@@ -212,6 +212,49 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   };
 
+  const eraseCanvasAt = (point: Point) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 13, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  const eraseCanvasSegment = (from: Point, to: Point) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 26;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  };
+
+  const eraseShapeAt = (point: Point) => {
+    const target = [...objectsRef.current].reverse().find(shape => {
+      const bounds = getBounds(shape, true);
+      return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom;
+    });
+    if (!target) return false;
+    const next = objectsRef.current.filter(shape => shape.id !== target.id);
+    if (selectedIdRef.current === target.id) selectShape(null);
+    setObjectsBoth(next);
+    persist(next);
+    return true;
+  };
+
   const expandIfNeeded = (point: Point, extra = 0) => {
     const needed = point.y + EXPAND_MARGIN + extra;
     if (needed <= canvasHeightRef.current) return;
@@ -235,9 +278,15 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     event.currentTarget.setPointerCapture(event.pointerId);
     isDrawing.current = true;
     lastPoint.current = point;
-    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+
+    if (tool === 'eraser') {
+      eraseCanvasAt(point);
+      return;
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -254,9 +303,16 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     const ctx = event.currentTarget.getContext('2d');
     if (!ctx) return;
     const previous = lastPoint.current || point;
-    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+
+    if (tool === 'eraser') {
+      eraseCanvasSegment(previous, point);
+      lastPoint.current = point;
+      return;
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = tool === 'eraser' ? 20 : 3;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(previous.x, previous.y);
     ctx.lineTo(point.x, point.y);
@@ -283,17 +339,36 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
   };
 
   const startShape = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (tool === 'pen' || tool === 'eraser' || tool === 'move') return;
+    if (tool === 'pen' || tool === 'move') return;
     event.preventDefault();
     const point = getPointFromSvgEvent(event);
     expandIfNeeded(point, shapeExtra());
+
+    if (tool === 'eraser') {
+      const removedShape = eraseShapeAt(point);
+      if (!removedShape) {
+        isDrawing.current = true;
+        lastPoint.current = point;
+        eraseCanvasAt(point);
+      }
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
     isDrawing.current = true;
     startPoint.current = point;
   };
 
   const stopShape = (event: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDrawing.current || tool === 'pen' || tool === 'eraser' || tool === 'move') return;
+    if (tool === 'eraser') {
+      event.preventDefault();
+      isDrawing.current = false;
+      lastPoint.current = null;
+      persist();
+      return;
+    }
+
+    if (!isDrawing.current || tool === 'pen' || tool === 'move') return;
     event.preventDefault();
     const from = startPoint.current;
     const to = getPointFromSvgEvent(event);
@@ -313,6 +388,16 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
   };
 
   const startMove = (event: React.PointerEvent<SVGGElement>, id: string) => {
+    if (tool === 'eraser') {
+      event.preventDefault();
+      event.stopPropagation();
+      const next = objectsRef.current.filter(shape => shape.id !== id);
+      if (selectedIdRef.current === id) selectShape(null);
+      setObjectsBoth(next);
+      persist(next);
+      return;
+    }
+
     if (tool !== 'move') return;
     event.preventDefault();
     event.stopPropagation();
@@ -323,6 +408,14 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
   };
 
   const moveShape = (event: React.PointerEvent<SVGSVGElement>) => {
+    if (tool === 'eraser') {
+      event.preventDefault();
+      const point = getPointFromSvgEvent(event);
+      if (isDrawing.current && lastPoint.current) eraseCanvasSegment(lastPoint.current, point);
+      lastPoint.current = point;
+      return;
+    }
+
     if (tool !== 'move' || !isDrawing.current || !selectedIdRef.current || !dragLastPoint.current) return;
     event.preventDefault();
     const point = getPointFromSvgEvent(event);
@@ -370,8 +463,11 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (tool === 'share') return <OptionRow label="Partager en" values={SHARE_OPTIONS} value={shareCount} onChange={setShareCount} />;
     if (tool === 'numberLine') return <OptionRow label="Repères" values={NUMBER_LINE_OPTIONS} value={numberLineTicks} onChange={setNumberLineTicks} />;
     if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner, puis glisse-la. Clique dans le vide ou sur Désélectionner pour enlever le contour bleu.</div>;
+    if (tool === 'eraser') return <div className="rounded-lg border border-red-200 bg-red-50/70 p-2 text-sm font-medium text-red-900">Glisse sur les traits du stylet pour les effacer. Clique sur une forme guidée pour la supprimer.</div>;
     return null;
   };
+
+  const svgPointerEvents = tool === 'pen' ? 'none' : 'auto';
 
   return (
     <div className="space-y-3">
@@ -403,7 +499,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
         <svg
           ref={svgRef}
           className="absolute left-2 top-2 w-[calc(100%-1rem)] touch-none select-none"
-          style={{ height: `${canvasHeight}px`, pointerEvents: tool === 'pen' || tool === 'eraser' ? 'none' : 'auto' }}
+          style={{ height: `${canvasHeight}px`, pointerEvents: svgPointerEvents }}
           onPointerDown={(event) => {
             if (event.target === event.currentTarget && tool === 'move') deselect();
             startShape(event);
@@ -415,7 +511,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           {objects.map(shape => <ShapeView key={shape.id} shape={shape} selected={selectedId === shape.id} onPointerDown={(event) => startMove(event, shape.id)} />)}
         </svg>
       </div>
-      <p className="text-xs text-slate-600">Les formes guidées se sélectionnent puis se déplacent. Les traits au stylet restent comme dessin libre.</p>
+      <p className="text-xs text-slate-600">La gomme efface les traits libres et supprime les formes guidées. Les traits au stylet restent comme dessin libre.</p>
     </div>
   );
 }
