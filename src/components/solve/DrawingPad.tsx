@@ -27,7 +27,7 @@ const NUMBER_LINE_OPTIONS = [5, 10];
 const TOOLS: Tool[] = ['move', 'pen', 'eraser', 'arrow', 'box', 'groups', 'numberLine', 'share'];
 
 const TOOL_LABELS: Record<Tool, string> = {
-  move: 'Déplacer',
+  move: 'Manipuler',
   pen: 'Stylet',
   eraser: 'Gomme',
   arrow: 'Flèche',
