@@ -379,6 +379,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
         const next = [...objectsRef.current, shape];
         selectShape(shape.id);
         setObjectsBoth(next);
+        setTool('move');
         persist(next);
       }
     }
@@ -523,7 +524,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           {objects.map(shape => <ShapeView key={shape.id} shape={shape} selected={selectedId === shape.id} onPointerDown={(event) => startMove(event, shape.id)} />)}
         </svg>
       </div>
-      <p className="text-xs text-slate-600">Manipuler : sélectionner, déplacer, désélectionner. La gomme efface les traits libres et supprime les formes guidées.</p>
+      <p className="text-xs text-slate-600">Manipuler : sélectionner, déplacer, désélectionner. Après l’ajout d’une forme, l’outil revient automatiquement à Manipuler.</p>
     </div>
   );
 }
