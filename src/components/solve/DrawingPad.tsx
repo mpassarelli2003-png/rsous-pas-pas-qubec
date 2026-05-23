@@ -40,9 +40,10 @@ const TOOL_LABELS: Record<Tool, string> = {
 const makeId = () => `shape-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const storageKey = () => `drawing-pad:${window.location.pathname}`;
 
-const getBounds = (shape: ShapeObject): Bounds => {
+const getBounds = (shape: ShapeObject, selected = false): Bounds => {
+  const pad = selected ? 18 : 8;
+
   if (shape.type === 'arrow' || shape.type === 'box' || shape.type === 'numberLine') {
-    const pad = 26;
     return {
       left: Math.min(shape.x1, shape.x2) - pad,
       right: Math.max(shape.x1, shape.x2) + pad,
@@ -57,10 +58,10 @@ const getBounds = (shape: ShapeObject): Bounds => {
     const totalW = (columns - 1) * 48 + 32;
     const totalH = (rows - 1) * 42 + 32;
     return {
-      left: shape.x - totalW / 2 - 12,
-      right: shape.x + totalW / 2 + 12,
-      top: shape.y - totalH / 2 - 12,
-      bottom: shape.y + totalH / 2 + 12,
+      left: shape.x - totalW / 2 - pad,
+      right: shape.x + totalW / 2 + pad,
+      top: shape.y - totalH / 2 - pad,
+      bottom: shape.y + totalH / 2 + pad,
     };
   }
 
@@ -69,10 +70,10 @@ const getBounds = (shape: ShapeObject): Bounds => {
   const totalW = columns * 54 + (columns - 1) * 14;
   const totalH = rows * 42 + (rows - 1) * 14;
   return {
-    left: shape.x - totalW / 2 - 12,
-    right: shape.x + totalW / 2 + 12,
-    top: shape.y - totalH / 2 - 12,
-    bottom: shape.y + totalH / 2 + 12,
+    left: shape.x - totalW / 2 - pad,
+    right: shape.x + totalW / 2 + pad,
+    top: shape.y - totalH / 2 - pad,
+    bottom: shape.y + totalH / 2 + pad,
   };
 };
 
@@ -348,6 +349,13 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     }
   };
 
+  const deselect = () => {
+    selectShape(null);
+    isDrawing.current = false;
+    dragLastPoint.current = null;
+    persist(objectsRef.current);
+  };
+
   const clear = () => {
     selectShape(null);
     setObjectsBoth([]);
@@ -361,7 +369,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (tool === 'groups') return <OptionRow label="Groupes" values={GROUP_OPTIONS} value={groupCount} onChange={setGroupCount} />;
     if (tool === 'share') return <OptionRow label="Partager en" values={SHARE_OPTIONS} value={shareCount} onChange={setShareCount} />;
     if (tool === 'numberLine') return <OptionRow label="Repères" values={NUMBER_LINE_OPTIONS} value={numberLineTicks} onChange={setNumberLineTicks} />;
-    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner. Garde le doigt ou la souris dessus, puis glisse-la.</div>;
+    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner, puis glisse-la. Clique dans le vide ou sur Désélectionner pour enlever le contour bleu.</div>;
     return null;
   };
 
@@ -376,7 +384,10 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           ))}
         </div>
         {renderOptions()}
-        <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={deselect} disabled={!selectedId}>Désélectionner</Button>
+          <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
+        </div>
       </div>
 
       <div ref={wrapperRef} className="relative w-full rounded-xl border-2 border-primary/30 bg-white p-2 shadow-inner overflow-hidden">
@@ -393,7 +404,10 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           ref={svgRef}
           className="absolute left-2 top-2 w-[calc(100%-1rem)] touch-none select-none"
           style={{ height: `${canvasHeight}px`, pointerEvents: tool === 'pen' || tool === 'eraser' ? 'none' : 'auto' }}
-          onPointerDown={(event) => { if (tool === 'move') selectShape(null); startShape(event); }}
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget && tool === 'move') deselect();
+            startShape(event);
+          }}
           onPointerMove={moveShape}
           onPointerUp={(event) => { stopShape(event); stopMove(event); }}
           onPointerCancel={(event) => { isDrawing.current = false; dragLastPoint.current = null; stopMove(event); }}
@@ -413,7 +427,7 @@ function HitBox({ bounds }: { bounds: Bounds }) {
 function ShapeView({ shape, selected, onPointerDown }: { shape: ShapeObject; selected: boolean; onPointerDown: (event: React.PointerEvent<SVGGElement>) => void }) {
   const strokeWidth = selected ? 4 : 3;
   const common = { stroke: '#0f172a', strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, pointerEvents: 'none' as const };
-  const bounds = getBounds(shape);
+  const bounds = getBounds(shape, selected);
   const selectedBox = selected ? <rect x={bounds.left} y={bounds.top} width={bounds.right - bounds.left} height={bounds.bottom - bounds.top} fill="none" stroke="#2563eb" strokeWidth={2} strokeDasharray="6 4" pointerEvents="none" /> : null;
 
   if (shape.type === 'arrow') {
