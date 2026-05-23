@@ -449,6 +449,14 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     persist(objectsRef.current);
   };
 
+  const deleteSelected = () => {
+    if (!selectedIdRef.current) return;
+    const next = objectsRef.current.filter(shape => shape.id !== selectedIdRef.current);
+    selectShape(null);
+    setObjectsBoth(next);
+    persist(next);
+  };
+
   const clear = () => {
     selectShape(null);
     setObjectsBoth([]);
@@ -462,7 +470,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
     if (tool === 'groups') return <OptionRow label="Groupes" values={GROUP_OPTIONS} value={groupCount} onChange={setGroupCount} />;
     if (tool === 'share') return <OptionRow label="Partager en" values={SHARE_OPTIONS} value={shareCount} onChange={setShareCount} />;
     if (tool === 'numberLine') return <OptionRow label="Repères" values={NUMBER_LINE_OPTIONS} value={numberLineTicks} onChange={setNumberLineTicks} />;
-    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner, puis glisse-la. Clique dans le vide ou sur Désélectionner pour enlever le contour bleu.</div>;
+    if (tool === 'move') return <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-2 text-sm font-medium text-blue-900">Clique une forme pour la sélectionner, puis glisse-la. Clique dans le vide pour enlever le contour bleu.</div>;
     if (tool === 'eraser') return <div className="rounded-lg border border-red-200 bg-red-50/70 p-2 text-sm font-medium text-red-900">Glisse sur les traits du stylet pour les effacer. Clique sur une forme guidée pour la supprimer.</div>;
     return null;
   };
@@ -480,10 +488,14 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           ))}
         </div>
         {renderOptions()}
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={deselect} disabled={!selectedId}>Désélectionner</Button>
-          <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
-        </div>
+        {selectedId && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-white p-2 text-sm">
+            <span className="font-semibold text-blue-900">Objet sélectionné</span>
+            <Button type="button" variant="outline" size="sm" onClick={deselect}>Désélectionner</Button>
+            <Button type="button" variant="outline" size="sm" onClick={deleteSelected}>Supprimer</Button>
+          </div>
+        )}
+        <Button type="button" variant="outline" size="sm" onClick={clear}>Effacer le croquis</Button>
       </div>
 
       <div ref={wrapperRef} className="relative w-full rounded-xl border-2 border-primary/30 bg-white p-2 shadow-inner overflow-hidden">
@@ -511,7 +523,7 @@ export function DrawingPad({ initialDataUrl = '', initialHeight = INITIAL_CANVAS
           {objects.map(shape => <ShapeView key={shape.id} shape={shape} selected={selectedId === shape.id} onPointerDown={(event) => startMove(event, shape.id)} />)}
         </svg>
       </div>
-      <p className="text-xs text-slate-600">La gomme efface les traits libres et supprime les formes guidées. Les traits au stylet restent comme dessin libre.</p>
+      <p className="text-xs text-slate-600">Manipuler : sélectionner, déplacer, désélectionner. La gomme efface les traits libres et supprime les formes guidées.</p>
     </div>
   );
 }
