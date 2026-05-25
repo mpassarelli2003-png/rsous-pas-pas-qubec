@@ -46,12 +46,12 @@ const getBillTheme = (value: string) => {
 };
 
 const getCoinStyle = (value: string) => {
-  if (value === '2 $') return { size: 'h-20 w-20', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 border-yellow-700', icon: 'ours', label: '2 $' };
-  if (value === '1 $') return { size: 'h-18 w-18', outer: 'border-yellow-700 bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 text-yellow-950', inner: 'bg-yellow-100/40 border-yellow-800/40', icon: 'huard', label: '1 $' };
-  if (value === '50 c') return { size: 'h-18 w-18', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'armoiries', label: '50 c' };
-  if (value === '25 c') return { size: 'h-16 w-16', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'caribou', label: '25 c' };
-  if (value === '10 c') return { size: 'h-14 w-14', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'voilier', label: '10 c' };
-  return { size: 'h-14 w-14', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'castor', label: '5 c' };
+  if (value === '2 $') return { sizePx: 82, outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 border-yellow-700', icon: 'ours', label: '2 $' };
+  if (value === '1 $') return { sizePx: 74, outer: 'border-yellow-700 bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 text-yellow-950', inner: 'bg-yellow-100/40 border-yellow-800/40', icon: 'huard', label: '1 $' };
+  if (value === '50 c') return { sizePx: 72, outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'armoiries', label: '50 c' };
+  if (value === '25 c') return { sizePx: 66, outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'caribou', label: '25 c' };
+  if (value === '10 c') return { sizePx: 60, outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'voilier', label: '10 c' };
+  return { sizePx: 58, outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'castor', label: '5 c' };
 };
 
 export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
@@ -97,9 +97,12 @@ export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
     if (item.type === 'piece') {
       const coin = getCoinStyle(item.texte);
       return (
-        <span className={`relative flex ${coin.size} items-center justify-center rounded-full border-4 font-extrabold shadow-inner ${coin.outer}`}>
-          <span className="absolute inset-[5px] rounded-full border border-current/25" />
-          <span className={`absolute inset-[14px] rounded-full border ${coin.inner}`} />
+        <span
+          className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-4 font-extrabold shadow-inner ${coin.outer}`}
+          style={{ width: coin.sizePx, height: coin.sizePx, minWidth: coin.sizePx, minHeight: coin.sizePx, borderRadius: '9999px' }}
+        >
+          <span className="absolute rounded-full border border-current/25" style={{ inset: 5 }} />
+          <span className={`absolute rounded-full border ${coin.inner}`} style={{ inset: item.texte === '2 $' ? 18 : 14 }} />
           <span className="absolute left-1/2 top-1 -translate-x-1/2 text-[7px] font-bold tracking-[0.18em] opacity-60">CANADA</span>
           <span className="relative z-10 flex flex-col items-center gap-0.5">
             <span className="opacity-75">{renderCoinIcon(coin.icon)}</span>
@@ -173,7 +176,7 @@ export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
           <button
             key={item.id}
             type="button"
-            className={`absolute touch-none select-none ${selectedId === item.id ? 'ring-4 ring-primary/40 rounded-xl' : ''}`}
+            className={`absolute touch-none select-none rounded-full ${selectedId === item.id ? 'ring-4 ring-primary/40' : ''}`}
             style={{ left: item.x, top: item.y }}
             onPointerDown={(event) => {
               const rect = event.currentTarget.getBoundingClientRect();
