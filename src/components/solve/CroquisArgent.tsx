@@ -32,6 +32,28 @@ const outils: { texte: string; type: ObjetArgent['type'] }[] = [
 
 const makeId = () => `argent-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+const getMoneyClass = (item: ObjetArgent) => {
+  if (item.type === 'etiquette') {
+    return 'min-w-[104px] rounded-xl border-2 border-blue-700 bg-blue-50 px-4 py-2 text-blue-950';
+  }
+
+  if (item.type === 'billet') {
+    const billColor = item.texte === '5 $'
+      ? 'border-blue-700 bg-blue-100 text-blue-950'
+      : item.texte === '10 $'
+        ? 'border-violet-700 bg-violet-100 text-violet-950'
+        : item.texte === '20 $'
+          ? 'border-emerald-700 bg-emerald-100 text-emerald-950'
+          : 'border-slate-700 bg-slate-100 text-slate-950';
+    return `min-w-[118px] rounded-lg border-2 px-6 py-3 ${billColor}`;
+  }
+
+  const coinColor = item.texte === '1 $'
+    ? 'border-yellow-700 bg-yellow-100 text-yellow-950'
+    : 'border-slate-500 bg-slate-100 text-slate-950';
+  return `flex h-16 w-16 items-center justify-center rounded-full border-4 ${coinColor}`;
+};
+
 export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
   const [items, setItems] = useState<ObjetArgent[]>(objets);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -99,29 +121,22 @@ export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
         onPointerDown={(event) => { if (event.target === event.currentTarget) setSelectedId(null); }}
       >
         {items.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">Ajoute un billet, une piece ou une etiquette.</div>}
-        {items.map(item => {
-          const base = item.type === 'billet'
-            ? 'rounded-md border-2 border-emerald-700 bg-emerald-100 px-5 py-2 text-emerald-950'
-            : item.type === 'piece'
-              ? 'rounded-full border-2 border-amber-700 bg-amber-100 px-3 py-3 text-amber-950 min-w-12 text-center'
-              : 'rounded-lg border-2 border-blue-700 bg-blue-50 px-4 py-2 text-blue-950';
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`absolute touch-none select-none font-bold shadow-sm ${base} ${selectedId === item.id ? 'ring-4 ring-primary/30' : ''}`}
-              style={{ left: item.x, top: item.y }}
-              onPointerDown={(event) => {
-                const rect = event.currentTarget.getBoundingClientRect();
-                setSelectedId(item.id);
-                setDrag({ id: item.id, dx: event.clientX - rect.left, dy: event.clientY - rect.top });
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-            >
-              {item.texte}
-            </button>
-          );
-        })}
+        {items.map(item => (
+          <button
+            key={item.id}
+            type="button"
+            className={`absolute touch-none select-none font-extrabold shadow-sm ${getMoneyClass(item)} ${selectedId === item.id ? 'ring-4 ring-primary/40' : ''}`}
+            style={{ left: item.x, top: item.y }}
+            onPointerDown={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setSelectedId(item.id);
+              setDrag({ id: item.id, dx: event.clientX - rect.left, dy: event.clientY - rect.top });
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+          >
+            <span className={item.type === 'billet' ? 'block border-y border-current/30 py-1' : ''}>{item.texte}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
