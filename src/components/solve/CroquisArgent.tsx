@@ -28,6 +28,7 @@ const outils: { texte: string; type: ObjetArgent['type'] }[] = [
   { texte: '100 $', type: 'billet' },
   { texte: '2 $', type: 'piece' },
   { texte: '1 $', type: 'piece' },
+  { texte: '50 c', type: 'piece' },
   { texte: '25 c', type: 'piece' },
   { texte: '10 c', type: 'piece' },
   { texte: '5 c', type: 'piece' },
@@ -44,10 +45,13 @@ const getBillTheme = (value: string) => {
   return { bg: 'from-slate-200 via-slate-100 to-slate-200', border: 'border-slate-700', text: 'text-slate-950', accent: 'bg-slate-500/30' };
 };
 
-const getCoinClass = (item: ObjetArgent) => {
-  if (item.texte === '2 $') return 'border-yellow-700 bg-gradient-to-br from-yellow-100 via-slate-100 to-yellow-200 text-yellow-950';
-  if (item.texte === '1 $') return 'border-yellow-700 bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-300 text-yellow-950';
-  return 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-300 text-slate-950';
+const getCoinStyle = (value: string) => {
+  if (value === '2 $') return { size: 'h-20 w-20', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 border-yellow-700', icon: 'ours', label: '2 $' };
+  if (value === '1 $') return { size: 'h-18 w-18', outer: 'border-yellow-700 bg-gradient-to-br from-yellow-100 via-amber-200 to-yellow-400 text-yellow-950', inner: 'bg-yellow-100/40 border-yellow-800/40', icon: 'huard', label: '1 $' };
+  if (value === '50 c') return { size: 'h-18 w-18', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'armoiries', label: '50 c' };
+  if (value === '25 c') return { size: 'h-16 w-16', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'caribou', label: '25 c' };
+  if (value === '10 c') return { size: 'h-14 w-14', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'voilier', label: '10 c' };
+  return { size: 'h-14 w-14', outer: 'border-slate-500 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 text-slate-950', inner: 'bg-white/20 border-slate-600/40', icon: 'castor', label: '5 c' };
 };
 
 export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
@@ -75,16 +79,32 @@ export function CroquisArgent({ objets = [], onChange }: CroquisArgentProps) {
     commit(next);
   };
 
+  const renderCoinIcon = (icon: string) => {
+    if (icon === 'castor') return <span className="text-[18px] leading-none">▰</span>;
+    if (icon === 'voilier') return <span className="text-[18px] leading-none">⛵</span>;
+    if (icon === 'caribou') return <span className="text-[18px] leading-none">♞</span>;
+    if (icon === 'armoiries') return <span className="text-[16px] leading-none">♜</span>;
+    if (icon === 'huard') return <span className="text-[18px] leading-none">◒</span>;
+    if (icon === 'ours') return <span className="text-[19px] leading-none">◓</span>;
+    return null;
+  };
+
   const renderMoneyObject = (item: ObjetArgent) => {
     if (item.type === 'etiquette') {
       return <span className="block min-w-[104px] rounded-xl border-2 border-blue-700 bg-blue-50 px-4 py-2 text-blue-950">{item.texte}</span>;
     }
 
     if (item.type === 'piece') {
+      const coin = getCoinStyle(item.texte);
       return (
-        <span className={`relative flex h-16 w-16 items-center justify-center rounded-full border-4 font-extrabold shadow-inner ${getCoinClass(item)}`}>
-          <span className="absolute inset-2 rounded-full border border-current/30" />
-          <span className="relative z-10">{item.texte}</span>
+        <span className={`relative flex ${coin.size} items-center justify-center rounded-full border-4 font-extrabold shadow-inner ${coin.outer}`}>
+          <span className="absolute inset-[5px] rounded-full border border-current/25" />
+          <span className={`absolute inset-[14px] rounded-full border ${coin.inner}`} />
+          <span className="absolute left-1/2 top-1 -translate-x-1/2 text-[7px] font-bold tracking-[0.18em] opacity-60">CANADA</span>
+          <span className="relative z-10 flex flex-col items-center gap-0.5">
+            <span className="opacity-75">{renderCoinIcon(coin.icon)}</span>
+            <span className="text-[13px] leading-none">{coin.label}</span>
+          </span>
         </span>
       );
     }
