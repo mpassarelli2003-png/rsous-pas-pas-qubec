@@ -196,5 +196,38 @@
       "expected_calculations": "8 × 7 = 56",
       "model_answer": "Les charrettes transportent 56 sacs au total."
     }
+  },
+  {
+    "id": "prob_geants_nourriture_planete_21",
+    "level": 6,
+    "theme": "nombres-decimaux",
+    "mathDomain": "arithmetique",
+    "mainConcept": "Arithmétique",
+    "subConcept": "nombres-decimaux",
+    "socialStudiesContext": "Territoire",
+    "socialStudiesConcept": "Déplacement et ressources",
+    "dataType": "données complètes",
+    "targetSkill": "planifier",
+    "difficulty": "moyen",
+    "title": "Le voyage des géants",
+    "content": "Les géants Spatia, Galaxon et leurs 4 amis quittent la planète 21 pour aller sur la Terre. L’équipage prévoit 5 229,78 kg de nourriture pour chaque jour du voyage. Le voyage durera 10 jours.",
+    "question": "Quelle quantité de nourriture chaque personne aura-t-elle pour le voyage ?",
+    "hints": { "level1": "Relis la question. On cherche une quantité de nourriture pour chaque personne, pas seulement pour tout l’équipage.", "level2": "Commence par trouver combien de personnes voyagent et la quantité totale de nourriture pour 10 jours.", "level3": "Il y a 6 personnes : Spatia, Galaxon et 4 amis. Calcule 5 229,78 × 10, puis divise le total par 6." },
+    "solution_data": {
+      "steps_count": 3,
+      "operations": ["addition", "multiplication", "division"],
+      "irrelevant_data": ["La planète 21 et la Terre situent le contexte du voyage."],
+      "what_i_am_looking_for": "La quantité de nourriture pour chaque personne pendant tout le voyage.",
+      "solution_plan": ["Trouver le nombre de personnes dans l’équipage", "Calculer la quantité totale de nourriture pour 10 jours", "Partager la nourriture totale également entre les personnes"],
+      "expected_operations": "addition, multiplication, division",
+      "feedback": "Il faut d’abord comprendre que l’équipage compte 6 personnes. Ensuite, on calcule la nourriture totale pour tout le voyage, puis on partage également.",
+      "error_feedback": "Attention : la quantité donnée est pour une journée. Il faut aussi tenir compte des 10 jours et des 6 personnes.",
+      "success_feedback": "Bonne démarche : tu as calculé le total du voyage avant de partager par personne.",
+      "estimation": "Environ 8 700 kg par personne",
+      "final_answer": "Chaque personne aura 8 716,3 kg de nourriture pour le voyage.",
+      "expected_steps": ["Calculer le nombre de personnes : 2 géants + 4 amis = 6 personnes", "Calculer la nourriture totale : 5 229,78 × 10 = 52 297,8 kg", "Partager également : 52 297,8 ÷ 6 = 8 716,3 kg"],
+      "expected_calculations": "2 + 4 = 6 personnes\n5 229,78 × 10 = 52 297,8 kg\n52 297,8 ÷ 6 = 8 716,3 kg",
+      "model_answer": "L’équipage compte 6 personnes. Pour 10 jours, il y aura 52 297,8 kg de nourriture. Chaque personne aura donc 8 716,3 kg de nourriture pour le voyage."
+    }
   }
 ]
