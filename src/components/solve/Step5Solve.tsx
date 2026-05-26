@@ -3,6 +3,7 @@ import { Card, Button, Textarea } from '@/lib/ui';
 import { RotateCcw, ClipboardList, Highlighter, Target, Lightbulb, Plus } from 'lucide-react';
 import { PlanTable, PlanRow } from './PlanTable';
 import { HintPanel } from './HintPanel';
+import { DrawingPad } from './DrawingPad';
 
 interface Step5SolveProps {
   problem: any;
@@ -77,6 +78,9 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
   const [activeLineId, setActiveLineId] = useState(() => makeInitialLines(savedData)[0]?.id || 'calc-1');
   const [showHint, setShowHint] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
+  const [calculationDrawing, setCalculationDrawing] = useState(savedData?.calculationDrawing || '');
+  const [calculationDrawingHeight, setCalculationDrawingHeight] = useState(savedData?.calculationDrawingHeight || 260);
+  const [calculationDrawingObjects, setCalculationDrawingObjects] = useState<any[]>(savedData?.calculationDrawingObjects || []);
 
   const planRows: PlanRow[] = planData?.planRows || [];
   const estimation: string = planData?.estimation || '';
@@ -85,10 +89,16 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
   const problemHints = problem?.hints ?? undefined;
   const operations = planRows.map(row => row.operation).filter(Boolean);
 
-  const emitUpdate = (nextLines: CalculationLine[]) => {
+  const emitUpdate = (
+    nextLines: CalculationLine[],
+    drawingPatch?: { dataUrl?: string; height?: number; objects?: any[] }
+  ) => {
     onUpdate({
       calculation: buildCalculationText(nextLines),
       calculationLines: nextLines,
+      calculationDrawing: drawingPatch?.dataUrl ?? calculationDrawing,
+      calculationDrawingHeight: drawingPatch?.height ?? calculationDrawingHeight,
+      calculationDrawingObjects: drawingPatch?.objects ?? calculationDrawingObjects,
     });
   };
 
@@ -123,6 +133,14 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
 
     const nextContent = activeLine.content + (activeLine.content.endsWith(' ') || activeLine.content === '' ? '' : ' ') + symbol + ' ';
     updateLine(activeLine.id, { content: nextContent });
+  };
+
+  const handleCalculationDrawingSave = (dataUrl: string, height: number, objects?: any[]) => {
+    const safeObjects = objects || [];
+    setCalculationDrawing(dataUrl);
+    setCalculationDrawingHeight(height);
+    setCalculationDrawingObjects(safeObjects);
+    emitUpdate(calculationLines, { dataUrl, height, objects: safeObjects });
   };
 
   const handleNextHintLevel = () => {
@@ -246,7 +264,7 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-bold text-primary uppercase tracking-tight">Tableau de calculs</p>
-              <p className="text-xs text-muted-foreground">Horizontal, posé / vertical ou explication seulement.</p>
+              <p className="text-xs text-muted-foreground">Horizontal, posé / vertical, explication ou stylet.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 text-muted-foreground self-start sm:self-auto">
               <RotateCcw className="h-3 w-3 mr-1" /> Effacer
@@ -309,6 +327,19 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           >
             <Plus className="h-4 w-4" /> Ajouter une ligne de calcul
           </Button>
+
+          <div className="rounded-xl border-2 border-slate-200 bg-slate-50/70 p-3 space-y-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900">Stylet de calcul</p>
+              <p className="text-xs text-slate-600">Utilise cet espace pour poser une opération, faire une retenue, barrer, dessiner une droite ou écrire avec le stylet.</p>
+            </div>
+            <DrawingPad
+              initialDataUrl={calculationDrawing}
+              initialHeight={calculationDrawingHeight}
+              initialObjects={calculationDrawingObjects}
+              onSave={handleCalculationDrawingSave}
+            />
+          </div>
         </Card>
 
         <div className="space-y-2">
