@@ -142,22 +142,6 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           </p>
         </div>
 
-        <div className="rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
-            <ClipboardList className="h-4 w-4 shrink-0" />
-            Mon plan
-          </p>
-          {planRows.length > 0 ? (
-            <div className="rounded-lg bg-white/70 border border-blue-100 overflow-hidden">
-              <PlanTable rows={planRows} readOnly />
-            </div>
-          ) : (
-            <p className="text-sm text-blue-900 leading-snug italic">
-              Ton plan de l’étape 4 apparaîtra ici.
-            </p>
-          )}
-        </div>
-
         <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-3 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-yellow-800 flex items-center gap-2 mb-2">
             <Highlighter className="h-4 w-4 shrink-0" />
@@ -239,10 +223,29 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           <p className="text-muted-foreground">Choisis une façon de calculer pour chaque étape de ton plan.</p>
         </div>
 
+        <Card className="p-4 border-2 border-blue-200 bg-blue-50/70 shadow-sm space-y-3">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5 text-blue-700" />
+            <div>
+              <p className="text-sm font-bold uppercase tracking-tight text-blue-900">Mon plan</p>
+              <p className="text-xs text-blue-800">Utilise ce plan pour remplir tes lignes de calcul dans le même ordre.</p>
+            </div>
+          </div>
+          {planRows.length > 0 ? (
+            <div className="rounded-lg bg-white border border-blue-100 overflow-hidden">
+              <PlanTable rows={planRows} readOnly />
+            </div>
+          ) : (
+            <p className="text-sm text-blue-900 leading-snug italic">
+              Ton plan de l’étape 4 apparaîtra ici.
+            </p>
+          )}
+        </Card>
+
         <Card className="p-4 border-2 border-primary/20 shadow-lg bg-white space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-primary uppercase tracking-tight">Mode de calcul</p>
+              <p className="text-sm font-bold text-primary uppercase tracking-tight">Tableau de calculs</p>
               <p className="text-xs text-muted-foreground">Horizontal, posé / vertical ou explication seulement.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 text-muted-foreground self-start sm:self-auto">
