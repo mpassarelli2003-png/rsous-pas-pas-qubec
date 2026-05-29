@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, Button, Textarea } from '@/lib/ui';
-import { RotateCcw, ClipboardList, Highlighter, Target, Lightbulb, Plus } from 'lucide-react';
+import { RotateCcw, ClipboardList, Highlighter, Target, Lightbulb, Plus, HelpCircle } from 'lucide-react';
 import { PlanTable, PlanRow } from './PlanTable';
 import { HintPanel } from './HintPanel';
 import { DrawingPad } from './DrawingPad';
@@ -20,6 +20,14 @@ interface CalculationLine {
   id: string;
   mode: CalculationMode;
   content: string;
+}
+
+interface TraceRow {
+  id: string;
+  target: string;
+  calculation: string;
+  result: string;
+  reason: string;
 }
 
 function extractNumbers(text: string): string[] {
@@ -59,6 +67,23 @@ function buildCalculationText(lines: CalculationLine[]): string {
     .join('\n\n');
 }
 
+function buildTraceText(rows: TraceRow[]): string {
+  return rows
+    .map((row, index) => {
+      const hasContent = row.target.trim() || row.calculation.trim() || row.result.trim() || row.reason.trim();
+      if (!hasContent) return '';
+      return [
+        `Trace ${index + 1}`,
+        `Ce que je cherche : ${row.target}`,
+        `Mon calcul : ${row.calculation}`,
+        `Résultat : ${row.result}`,
+        `Pourquoi : ${row.reason}`,
+      ].join('\n');
+    })
+    .filter(Boolean)
+    .join('\n\n');
+}
+
 function makeInitialLines(savedData?: any): CalculationLine[] {
   if (Array.isArray(savedData?.calculationLines) && savedData.calculationLines.length > 0) {
     return savedData.calculationLines;
@@ -71,13 +96,29 @@ function makeInitialLines(savedData?: any): CalculationLine[] {
   return [{ id: 'calc-1', mode: 'horizontal', content: '' }];
 }
 
+function makeInitialTraceRows(savedData?: any): TraceRow[] {
+  if (Array.isArray(savedData?.traceRows) && savedData.traceRows.length > 0) {
+    return savedData.traceRows;
+  }
+
+  return [1, 2, 3].map(index => ({
+    id: `trace-${index}`,
+    target: '',
+    calculation: '',
+    result: '',
+    reason: '',
+  }));
+}
+
 const MATH_SYMBOLS = ['+', '−', '×', '÷', '=', '%', '$', ',', '.', '(', ')'];
 
 export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, currentStep = 5 }: Step5SolveProps) {
   const [calculationLines, setCalculationLines] = useState<CalculationLine[]>(() => makeInitialLines(savedData));
   const [activeLineId, setActiveLineId] = useState(() => makeInitialLines(savedData)[0]?.id || 'calc-1');
+  const [traceRows, setTraceRows] = useState<TraceRow[]>(() => makeInitialTraceRows(savedData));
   const [showHint, setShowHint] = useState(false);
   const [hintLevel, setHintLevel] = useState(1);
+  const [showOperationHelp, setShowOperationHelp] = useState(true);
   const [calculationDrawing, setCalculationDrawing] = useState(savedData?.calculationDrawing || '');
   const [calculationDrawingHeight, setCalculationDrawingHeight] = useState(savedData?.calculationDrawingHeight || 260);
   const [calculationDrawingObjects, setCalculationDrawingObjects] = useState<any[]>(savedData?.calculationDrawingObjects || []);
@@ -91,11 +132,14 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
 
   const emitUpdate = (
     nextLines: CalculationLine[],
-    drawingPatch?: { dataUrl?: string; height?: number; objects?: any[] }
+    drawingPatch?: { dataUrl?: string; height?: number; objects?: any[] },
+    nextTraceRows: TraceRow[] = traceRows
   ) => {
     onUpdate({
       calculation: buildCalculationText(nextLines),
       calculationLines: nextLines,
+      traceRows: nextTraceRows,
+      calculationTrace: buildTraceText(nextTraceRows),
       calculationDrawing: drawingPatch?.dataUrl ?? calculationDrawing,
       calculationDrawingHeight: drawingPatch?.height ?? calculationDrawingHeight,
       calculationDrawingObjects: drawingPatch?.objects ?? calculationDrawingObjects,
@@ -106,6 +150,25 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
     const next = calculationLines.map(line => line.id === lineId ? { ...line, ...patch } : line);
     setCalculationLines(next);
     emitUpdate(next);
+  };
+
+  const updateTraceRow = (rowId: string, patch: Partial<TraceRow>) => {
+    const next = traceRows.map(row => row.id === rowId ? { ...row, ...patch } : row);
+    setTraceRows(next);
+    emitUpdate(calculationLines, undefined, next);
+  };
+
+  const addTraceRow = () => {
+    const nextRow: TraceRow = {
+      id: `trace-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      target: '',
+      calculation: '',
+      result: '',
+      reason: '',
+    };
+    const next = [...traceRows, nextRow];
+    setTraceRows(next);
+    emitUpdate(calculationLines, undefined, next);
   };
 
   const addLine = () => {
@@ -197,6 +260,25 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           )}
         </div>
 
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setShowOperationHelp(v => !v)}
+            className="w-full flex items-center justify-between gap-2 text-left text-[11px] font-bold uppercase tracking-widest text-indigo-800"
+          >
+            <span className="flex items-center gap-2"><HelpCircle className="h-4 w-4 shrink-0" /> Pourquoi cette opération?</span>
+            <span className="text-xs normal-case tracking-normal">{showOperationHelp ? 'Masquer' : 'Voir'}</span>
+          </button>
+          {showOperationHelp && (
+            <div className="mt-2 space-y-1 text-sm text-indigo-950 leading-snug">
+              <p><strong>Additionner :</strong> je réunis ou j’ajoute.</p>
+              <p><strong>Soustraire :</strong> j’enlève, je compare ou je cherche ce qui manque.</p>
+              <p><strong>Multiplier :</strong> je répète des groupes égaux.</p>
+              <p><strong>Diviser :</strong> je partage également ou je cherche combien par groupe.</p>
+            </div>
+          )}
+        </div>
+
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-widest text-amber-800 flex items-center gap-2 mb-2">
             <Target className="h-4 w-4 shrink-0" />
@@ -241,23 +323,86 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
           <p className="text-muted-foreground">Choisis une façon de calculer pour chaque étape de ton plan.</p>
         </div>
 
-        <Card className="p-4 border-2 border-blue-200 bg-blue-50/70 shadow-sm space-y-3">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-blue-700" />
-            <div>
-              <p className="text-sm font-bold uppercase tracking-tight text-blue-900">Mon plan</p>
-              <p className="text-xs text-blue-800">Utilise ce plan pour remplir tes lignes de calcul dans le même ordre.</p>
+        {planRows.length > 0 && (
+          <Card className="p-4 border-2 border-blue-200 bg-blue-50/70 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-blue-700" />
+              <div>
+                <p className="text-sm font-bold uppercase tracking-tight text-blue-900">Mon plan</p>
+                <p className="text-xs text-blue-800">Utilise ton plan pour faire tes calculs dans l’ordre.</p>
+              </div>
             </div>
-          </div>
-          {planRows.length > 0 ? (
             <div className="rounded-lg bg-white border border-blue-100 overflow-hidden">
               <PlanTable rows={planRows} readOnly />
             </div>
-          ) : (
-            <p className="text-sm text-blue-900 leading-snug italic">
-              Ton plan de l’étape 4 apparaîtra ici.
-            </p>
-          )}
+          </Card>
+        )}
+
+        <Card className="p-4 border-2 border-emerald-200 bg-emerald-50/70 shadow-sm space-y-4">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-tight text-emerald-900">Mes traces de calcul</p>
+            <p className="text-xs text-emerald-800">Pour chaque calcul, écris ce que tu cherches, ton calcul et pourquoi tu le fais.</p>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-emerald-200 bg-white">
+            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+              <thead className="bg-emerald-100 text-emerald-950">
+                <tr>
+                  <th className="border-b border-emerald-200 p-2 font-bold">Ce que je cherche</th>
+                  <th className="border-b border-emerald-200 p-2 font-bold">Mon calcul</th>
+                  <th className="border-b border-emerald-200 p-2 font-bold">Résultat</th>
+                  <th className="border-b border-emerald-200 p-2 font-bold">Pourquoi je fais ce calcul</th>
+                </tr>
+              </thead>
+              <tbody>
+                {traceRows.map(row => (
+                  <tr key={row.id} className="align-top">
+                    <td className="border-t border-emerald-100 p-2">
+                      <textarea
+                        value={row.target}
+                        onChange={e => updateTraceRow(row.id, { target: e.target.value })}
+                        placeholder="ex. le total des billets"
+                        className="min-h-[70px] w-full resize-y rounded-md border border-emerald-200 bg-white p-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                      />
+                    </td>
+                    <td className="border-t border-emerald-100 p-2">
+                      <textarea
+                        value={row.calculation}
+                        onChange={e => updateTraceRow(row.id, { calculation: e.target.value })}
+                        placeholder="ex. 4 × 10"
+                        className="min-h-[70px] w-full resize-y rounded-md border border-emerald-200 bg-white p-2 font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                      />
+                    </td>
+                    <td className="border-t border-emerald-100 p-2">
+                      <textarea
+                        value={row.result}
+                        onChange={e => updateTraceRow(row.id, { result: e.target.value })}
+                        placeholder="ex. 40 $"
+                        className="min-h-[70px] w-full resize-y rounded-md border border-emerald-200 bg-white p-2 font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                      />
+                    </td>
+                    <td className="border-t border-emerald-100 p-2">
+                      <textarea
+                        value={row.reason}
+                        onChange={e => updateTraceRow(row.id, { reason: e.target.value })}
+                        placeholder="ex. parce que j’ai 4 billets de 10 $"
+                        className="min-h-[70px] w-full resize-y rounded-md border border-emerald-200 bg-white p-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addTraceRow}
+            className="w-full gap-2 border-dashed border-emerald-400 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-500"
+          >
+            <Plus className="h-4 w-4" /> Ajouter une trace de calcul
+          </Button>
         </Card>
 
         <Card className="p-4 border-2 border-primary/20 shadow-lg bg-white space-y-4">
