@@ -9,6 +9,30 @@ interface Step6AnswerProps {
   savedData?: any;
 }
 
+interface VerificationChecks {
+  answersQuestion: boolean;
+  hasUnit: boolean;
+  reasonable: boolean;
+  rereadData: boolean;
+  completeSentence: boolean;
+}
+
+const DEFAULT_CHECKS: VerificationChecks = {
+  answersQuestion: false,
+  hasUnit: false,
+  reasonable: false,
+  rereadData: false,
+  completeSentence: false,
+};
+
+const CHECK_ITEMS: { key: keyof VerificationChecks; label: string }[] = [
+  { key: 'answersQuestion', label: 'Ma réponse répond bien à la question.' },
+  { key: 'hasUnit', label: 'J’ai utilisé la bonne unité : $, m, cm, min, élèves, objets…' },
+  { key: 'reasonable', label: 'Mon résultat est raisonnable.' },
+  { key: 'rereadData', label: 'J’ai relu les données importantes.' },
+  { key: 'completeSentence', label: 'Ma phrase-réponse est complète.' },
+];
+
 /** Analyse basique de la réponse de l'élève vs réponse attendue */
 function analyzeAnswer(studentAnswer: string, solution: any): { score: number; feedbacks: string[] } {
   if (!studentAnswer.trim()) return { score: 0, feedbacks: [] };
@@ -16,26 +40,22 @@ function analyzeAnswer(studentAnswer: string, solution: any): { score: number; f
   const ans = studentAnswer.toLowerCase();
   const model = (solution.final_answer || '').toLowerCase();
 
-  // Vérifie si la réponse est une phrase complète (contient au moins un verbe courant ou est longue)
   const isPhraseComplete = studentAnswer.trim().split(' ').length >= 5;
   if (!isPhraseComplete) feedbacks.push("Ta réponse est trop courte. Essaie d'écrire une phrase complète.");
 
-  // Cherche les chiffres clés dans la réponse modèle et la réponse de l'élève
   const modelNumbers = model.match(/\d+[,.]?\d*/g) || [];
   const studentNumbers = ans.match(/\d+[,.]?\d*/g) || [];
-  const hasCorrectNumber = modelNumbers.some(n => studentNumbers.includes(n));
+  const hasCorrectNumber = modelNumbers.some((n: string) => studentNumbers.includes(n));
   if (!hasCorrectNumber && modelNumbers.length > 0) {
-    feedbacks.push("Le nombre dans ta réponse ne correspond pas au résultat attendu. Vérifie tes calculs.");
+    feedbacks.push('Le nombre dans ta réponse ne correspond pas au résultat attendu. Vérifie tes calculs.');
   } else if (hasCorrectNumber) {
-    feedbacks.push("✓ Tu as le bon résultat numérique !");
+    feedbacks.push('✓ Tu as le bon résultat numérique !');
   }
 
-  // Cherche unité ($ m g cm km kg min h)
   const hasUnit = /\$|mètre|gramme|centimètre|kilomètre|kilogramme|minute|heure| m | g | cm | kg | min | h |parts?/i.test(studentAnswer);
   if (!hasUnit) feedbacks.push("N'oublie pas d'ajouter l'unité ($, mètres, grammes, etc.) dans ta réponse.");
   else feedbacks.push("✓ Tu as inclus l'unité dans ta réponse.");
 
-  // Score
   let score = 0;
   if (isPhraseComplete) score += 30;
   if (hasCorrectNumber) score += 50;
@@ -46,12 +66,33 @@ function analyzeAnswer(studentAnswer: string, solution: any): { score: number; f
 
 export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) {
   const [answer, setAnswer] = useState(savedData?.answer || '');
+  const [verificationChecks, setVerificationChecks] = useState<VerificationChecks>({ ...DEFAULT_CHECKS, ...(savedData?.verificationChecks || {}) });
+  const [verificationNote, setVerificationNote] = useState(savedData?.verificationNote || '');
   const [showCorrection, setShowCorrection] = useState(false);
   const solution = problem.solution_data;
 
+  const emitUpdate = (nextAnswer = answer, nextChecks = verificationChecks, nextNote = verificationNote) => {
+    onUpdate({
+      answer: nextAnswer,
+      verificationChecks: nextChecks,
+      verificationNote: nextNote,
+    });
+  };
+
   const handleAnswerChange = (val: string) => {
     setAnswer(val);
-    onUpdate({ answer: val });
+    emitUpdate(val);
+  };
+
+  const handleCheckChange = (key: keyof VerificationChecks, checked: boolean) => {
+    const nextChecks = { ...verificationChecks, [key]: checked };
+    setVerificationChecks(nextChecks);
+    emitUpdate(answer, nextChecks);
+  };
+
+  const handleVerificationNoteChange = (val: string) => {
+    setVerificationNote(val);
+    emitUpdate(answer, verificationChecks, val);
   };
 
   const { score, feedbacks } = analyzeAnswer(answer, solution);
@@ -74,7 +115,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
         <p className="text-muted-foreground">Réponds à la question par une phrase complète qui a du sens.</p>
       </div>
 
-      {/* Zone de réponse */}
       <Card className="p-8 border-4 border-primary/10 shadow-xl bg-white relative overflow-hidden">
         <div className="absolute top-0 right-0 p-2 bg-primary/10 rounded-bl-xl">
           <MessageSquare className="h-4 w-4 text-primary" />
@@ -95,7 +135,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
             />
           </div>
 
-          {/* Rétroaction immédiate sur la réponse */}
           {answer.trim().length > 3 && (
             <div className={cn('rounded-xl border p-4 space-y-2 animate-fade-in', scoreColor)}>
               <div className="flex items-center gap-2 font-bold">
@@ -122,7 +161,39 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
         </div>
       </Card>
 
-      {/* Aide à la structure */}
+      <Card className="p-5 border-2 border-emerald-200 bg-emerald-50/70 shadow-sm space-y-4">
+        <div>
+          <h4 className="font-bold text-emerald-950 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5" /> Je vérifie ma réponse
+          </h4>
+          <p className="text-sm text-emerald-800">Coche chaque point après l’avoir vérifié. Tu peux corriger ta réponse avant de terminer.</p>
+        </div>
+
+        <div className="grid gap-2">
+          {CHECK_ITEMS.map(item => (
+            <label key={item.key} className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-white p-3 text-sm text-emerald-950">
+              <input
+                type="checkbox"
+                checked={verificationChecks[item.key]}
+                onChange={e => handleCheckChange(item.key, e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-emerald-300"
+              />
+              <span>{item.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-emerald-950">Ce que j’ai corrigé ou vérifié</label>
+          <Textarea
+            placeholder="ex. J’ai vérifié l’unité. Ma réponse doit être en dollars."
+            className="min-h-[90px] border-emerald-200 bg-white focus-visible:ring-emerald-300"
+            value={verificationNote}
+            onChange={e => handleVerificationNoteChange(e.target.value)}
+          />
+        </div>
+      </Card>
+
       <div className="grid md:grid-cols-2 gap-6">
         <div className="p-5 bg-blue-50 border border-blue-200 rounded-2xl space-y-3">
           <h4 className="font-bold text-blue-900 flex items-center gap-2">
@@ -150,7 +221,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
         </div>
       </div>
 
-      {/* ─── Section CORRECTION ─── */}
       <div className="rounded-2xl overflow-hidden border-4 border-primary/30 shadow-xl mt-6">
         <button
           className="w-full flex items-center justify-between px-6 py-4 bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors"
@@ -165,7 +235,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
 
         {showCorrection && (
           <div className="p-6 bg-white space-y-8 animate-fade-in">
-            {/* 1. Bonne réponse finale */}
             <div className="space-y-3">
               <h4 className="font-bold text-lg flex items-center gap-2 text-green-700">
                 <span className="h-7 w-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold shrink-0">1</span>
@@ -176,7 +245,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
               </div>
             </div>
 
-            {/* 2. Calculs attendus */}
             <div className="space-y-3">
               <h4 className="font-bold text-lg flex items-center gap-2 text-blue-700">
                 <span className="h-7 w-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shrink-0">2</span>
@@ -187,7 +255,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
               </pre>
             </div>
 
-            {/* 3. Étapes de résolution */}
             <div className="space-y-3">
               <h4 className="font-bold text-lg flex items-center gap-2 text-purple-700">
                 <span className="h-7 w-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold shrink-0">3</span>
@@ -205,7 +272,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
               </ol>
             </div>
 
-            {/* 4. Phrase-réponse modèle */}
             <div className="space-y-3">
               <h4 className="font-bold text-lg flex items-center gap-2 text-orange-700">
                 <span className="h-7 w-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-sm font-bold shrink-0">4</span>
@@ -216,7 +282,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
               </div>
             </div>
 
-            {/* 5. Comparaison avec la réponse de l'élève */}
             <div className="space-y-3">
               <h4 className="font-bold text-lg flex items-center gap-2">
                 <span className="h-7 w-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-bold shrink-0">5</span>
@@ -239,7 +304,6 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
                 </div>
               )}
 
-              {/* Rétroactions pédagogiques */}
               {answer.trim() && (
                 <div className={cn('rounded-xl border p-4 space-y-3 mt-3', scoreColor)}>
                   <p className="font-bold">Rétroaction :</p>
@@ -261,9 +325,8 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
               )}
             </div>
 
-            {/* Message encourageant */}
             <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-2xl text-center text-primary font-semibold text-base">
-              Peu importe ton score, chaque problème que tu pratiques te rend plus fort(e) en mathématiques. Continue comme ça !
+              Peu importe ton score, chaque problème que tu pratiques te rend plus fort en mathématiques. Continue comme ça !
             </div>
           </div>
         )}
