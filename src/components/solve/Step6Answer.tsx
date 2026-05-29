@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Textarea, Badge } from '@/lib/ui';
 import { MessageSquare, CheckCircle2, Lightbulb, Search, BookOpen, ChevronDown, ChevronUp, AlertCircle, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CognitiveSupportBar } from './CognitiveSupportBar';
 
 interface Step6AnswerProps {
   problem: any;
@@ -33,7 +34,6 @@ const CHECK_ITEMS: { key: keyof VerificationChecks; label: string }[] = [
   { key: 'completeSentence', label: 'Ma phrase-réponse est complète.' },
 ];
 
-/** Analyse basique de la réponse de l'élève vs réponse attendue */
 function analyzeAnswer(studentAnswer: string, solution: any): { score: number; feedbacks: string[] } {
   if (!studentAnswer.trim()) return { score: 0, feedbacks: [] };
   const feedbacks: string[] = [];
@@ -72,11 +72,7 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
   const solution = problem.solution_data;
 
   const emitUpdate = (nextAnswer = answer, nextChecks = verificationChecks, nextNote = verificationNote) => {
-    onUpdate({
-      answer: nextAnswer,
-      verificationChecks: nextChecks,
-      verificationNote: nextNote,
-    });
+    onUpdate({ answer: nextAnswer, verificationChecks: nextChecks, verificationNote: nextNote });
   };
 
   const handleAnswerChange = (val: string) => {
@@ -97,16 +93,8 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
 
   const { score, feedbacks } = analyzeAnswer(answer, solution);
 
-  const scoreColor =
-    score >= 80 ? 'text-green-700 bg-green-50 border-green-200' :
-    score >= 50 ? 'text-orange-700 bg-orange-50 border-orange-200' :
-    'text-red-700 bg-red-50 border-red-200';
-
-  const scoreLabel =
-    score >= 80 ? 'Excellente réponse !' :
-    score >= 50 ? 'Bonne tentative — quelques points à améliorer.' :
-    answer.trim() ? 'Continue d\'essayer !' :
-    '';
+  const scoreColor = score >= 80 ? 'text-green-700 bg-green-50 border-green-200' : score >= 50 ? 'text-orange-700 bg-orange-50 border-orange-200' : 'text-red-700 bg-red-50 border-red-200';
+  const scoreLabel = score >= 80 ? 'Excellente réponse !' : score >= 50 ? 'Bonne tentative — quelques points à améliorer.' : answer.trim() ? 'Continue d\'essayer !' : '';
 
   return (
     <div className="space-y-8">
@@ -115,219 +103,57 @@ export function Step6Answer({ problem, onUpdate, savedData }: Step6AnswerProps) 
         <p className="text-muted-foreground">Réponds à la question par une phrase complète qui a du sens.</p>
       </div>
 
+      <CognitiveSupportBar
+        items={[
+          { id: 'recall-answer', label: 'Rappel avant correction', icon: 'recall', tone: 'green', title: 'Je me rappelle avant de vérifier', text: 'Avant de regarder la correction, essaie d’expliquer ton raisonnement dans tes mots. Cette récupération aide ton cerveau à consolider.' },
+          { id: 'check-answer', label: 'Validation', icon: 'target', tone: 'violet', title: 'Je vérifie une chose à la fois', text: 'Regarde la question, l’unité, le résultat et ta phrase-réponse. Ne vérifie pas tout en même temps.' },
+        ]}
+      />
+
       <Card className="p-8 border-4 border-primary/10 shadow-xl bg-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-2 bg-primary/10 rounded-bl-xl">
-          <MessageSquare className="h-4 w-4 text-primary" />
-        </div>
-
+        <div className="absolute top-0 right-0 p-2 bg-primary/10 rounded-bl-xl"><MessageSquare className="h-4 w-4 text-primary" /></div>
         <div className="space-y-6">
-          <div className="p-4 bg-muted/50 rounded-lg border border-muted italic text-muted-foreground mb-4">
-            Question : "{problem.question}"
-          </div>
-
+          <div className="p-4 bg-muted/50 rounded-lg border border-muted italic text-muted-foreground mb-4">Question : "{problem.question}"</div>
           <div className="space-y-2">
             <label className="text-sm font-bold uppercase text-primary tracking-widest">Ma phrase réponse :</label>
-            <Textarea
-              placeholder="Ex: Julie a assez d'argent car elle a récolté 87,50 $ au total."
-              className="min-h-[120px] text-xl p-4 resize-none border-2 focus:border-primary bg-secondary/10"
-              value={answer}
-              onChange={e => handleAnswerChange(e.target.value)}
-            />
+            <Textarea placeholder="Ex: Julie a assez d'argent car elle a récolté 87,50 $ au total." className="min-h-[120px] text-xl p-4 resize-none border-2 focus:border-primary bg-secondary/10" value={answer} onChange={e => handleAnswerChange(e.target.value)} />
           </div>
-
           {answer.trim().length > 3 && (
             <div className={cn('rounded-xl border p-4 space-y-2 animate-fade-in', scoreColor)}>
               <div className="flex items-center gap-2 font-bold">
                 {score >= 80 ? <PartyPopper className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-                {scoreLabel}
-                <span className="ml-auto text-sm font-medium opacity-70">{score}/100</span>
+                {scoreLabel}<span className="ml-auto text-sm font-medium opacity-70">{score}/100</span>
               </div>
               <ul className="text-sm space-y-1">
-                {feedbacks.map((f, i) => (
-                  <li key={i} className={cn('flex items-start gap-2', f.startsWith('✓') ? 'text-green-700' : '')}>
-                    <span className="shrink-0 mt-0.5">{f.startsWith('✓') ? '✓' : '→'}</span>
-                    <span>{f.replace('✓ ', '')}</span>
-                  </li>
-                ))}
+                {feedbacks.map((f, i) => <li key={i} className={cn('flex items-start gap-2', f.startsWith('✓') ? 'text-green-700' : '')}><span className="shrink-0 mt-0.5">{f.startsWith('✓') ? '✓' : '→'}</span><span>{f.replace('✓ ', '')}</span></li>)}
               </ul>
             </div>
           )}
-
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className="px-3 py-1">Contient un nombre</Badge>
-            <Badge variant="secondary" className="px-3 py-1">Contient l'unité</Badge>
-            <Badge variant="secondary" className="px-3 py-1">Phrase complète</Badge>
-          </div>
+          <div className="flex flex-wrap gap-2"><Badge variant="secondary" className="px-3 py-1">Contient un nombre</Badge><Badge variant="secondary" className="px-3 py-1">Contient l'unité</Badge><Badge variant="secondary" className="px-3 py-1">Phrase complète</Badge></div>
         </div>
       </Card>
 
       <Card className="p-5 border-2 border-emerald-200 bg-emerald-50/70 shadow-sm space-y-4">
-        <div>
-          <h4 className="font-bold text-emerald-950 flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5" /> Je vérifie ma réponse
-          </h4>
-          <p className="text-sm text-emerald-800">Coche chaque point après l’avoir vérifié. Tu peux corriger ta réponse avant de terminer.</p>
-        </div>
-
-        <div className="grid gap-2">
-          {CHECK_ITEMS.map(item => (
-            <label key={item.key} className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-white p-3 text-sm text-emerald-950">
-              <input
-                type="checkbox"
-                checked={verificationChecks[item.key]}
-                onChange={e => handleCheckChange(item.key, e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-emerald-300"
-              />
-              <span>{item.label}</span>
-            </label>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-emerald-950">Ce que j’ai corrigé ou vérifié</label>
-          <Textarea
-            placeholder="ex. J’ai vérifié l’unité. Ma réponse doit être en dollars."
-            className="min-h-[90px] border-emerald-200 bg-white focus-visible:ring-emerald-300"
-            value={verificationNote}
-            onChange={e => handleVerificationNoteChange(e.target.value)}
-          />
-        </div>
+        <div><h4 className="font-bold text-emerald-950 flex items-center gap-2"><CheckCircle2 className="h-5 w-5" /> Je vérifie ma réponse</h4><p className="text-sm text-emerald-800">Coche chaque point après l’avoir vérifié. Tu peux corriger ta réponse avant de terminer.</p></div>
+        <div className="grid gap-2">{CHECK_ITEMS.map(item => <label key={item.key} className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-white p-3 text-sm text-emerald-950"><input type="checkbox" checked={verificationChecks[item.key]} onChange={e => handleCheckChange(item.key, e.target.checked)} className="mt-1 h-4 w-4 rounded border-emerald-300" /><span>{item.label}</span></label>)}</div>
+        <div className="space-y-2"><label className="text-sm font-bold text-emerald-950">Ce que j’ai corrigé ou vérifié</label><Textarea placeholder="ex. J’ai vérifié l’unité. Ma réponse doit être en dollars." className="min-h-[90px] border-emerald-200 bg-white focus-visible:ring-emerald-300" value={verificationNote} onChange={e => handleVerificationNoteChange(e.target.value)} /></div>
       </Card>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="p-5 bg-blue-50 border border-blue-200 rounded-2xl space-y-3">
-          <h4 className="font-bold text-blue-900 flex items-center gap-2">
-            <Search className="h-5 w-5" /> Aide pour la structure
-          </h4>
-          <p className="text-sm text-blue-800 leading-relaxed">
-            Reprends les mots de la question pour commencer ta phrase.
-          </p>
-          <div className="bg-white/80 p-3 rounded-lg border border-blue-100 text-xs text-blue-900 space-y-1">
-            <p>• Le prix total est de <strong>___ $</strong>.</p>
-            <p>• Il reste <strong>___ [unité]</strong>.</p>
-            <p>• [Personnage] a <strong>assez / pas assez</strong> d'argent.</p>
-          </div>
-        </div>
-        <div className="p-5 bg-yellow-50 border border-yellow-200 rounded-2xl space-y-3">
-          <h4 className="font-bold text-yellow-900 flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" /> Le savais-tu ?
-          </h4>
-          <p className="text-sm text-yellow-800 leading-relaxed">
-            Une réponse complète aide ton enseignant(e) à comprendre que tu as bien saisi ce qu'on te demandait.
-          </p>
-          <div className="flex items-center gap-2 text-yellow-700 font-bold text-xs uppercase tracking-tighter">
-            <CheckCircle2 className="h-4 w-4" /> Unité + Nombre + Phrase
-          </div>
-        </div>
+        <div className="p-5 bg-blue-50 border border-blue-200 rounded-2xl space-y-3"><h4 className="font-bold text-blue-900 flex items-center gap-2"><Search className="h-5 w-5" /> Aide pour la structure</h4><p className="text-sm text-blue-800 leading-relaxed">Reprends les mots de la question pour commencer ta phrase.</p><div className="bg-white/80 p-3 rounded-lg border border-blue-100 text-xs text-blue-900 space-y-1"><p>• Le prix total est de <strong>___ $</strong>.</p><p>• Il reste <strong>___ [unité]</strong>.</p><p>• [Personnage] a <strong>assez / pas assez</strong> d'argent.</p></div></div>
+        <div className="p-5 bg-yellow-50 border border-yellow-200 rounded-2xl space-y-3"><h4 className="font-bold text-yellow-900 flex items-center gap-2"><Lightbulb className="h-5 w-5" /> Le savais-tu ?</h4><p className="text-sm text-yellow-800 leading-relaxed">Une réponse complète aide ton enseignant(e) à comprendre que tu as bien saisi ce qu'on te demandait.</p><div className="flex items-center gap-2 text-yellow-700 font-bold text-xs uppercase tracking-tighter"><CheckCircle2 className="h-4 w-4" /> Unité + Nombre + Phrase</div></div>
       </div>
 
       <div className="rounded-2xl overflow-hidden border-4 border-primary/30 shadow-xl mt-6">
-        <button
-          className="w-full flex items-center justify-between px-6 py-4 bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors"
-          onClick={() => setShowCorrection(v => !v)}
-        >
-          <span className="flex items-center gap-3">
-            <BookOpen className="h-5 w-5" />
-            Voir la correction
-          </span>
-          {showCorrection ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-        </button>
-
+        <button className="w-full flex items-center justify-between px-6 py-4 bg-primary text-primary-foreground font-bold text-base hover:bg-primary/90 transition-colors" onClick={() => setShowCorrection(v => !v)}><span className="flex items-center gap-3"><BookOpen className="h-5 w-5" />Voir la correction</span>{showCorrection ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</button>
         {showCorrection && (
           <div className="p-6 bg-white space-y-8 animate-fade-in">
-            <div className="space-y-3">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-green-700">
-                <span className="h-7 w-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold shrink-0">1</span>
-                La bonne réponse finale
-              </h4>
-              <div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-900 font-semibold text-lg leading-relaxed">
-                {solution.final_answer}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-blue-700">
-                <span className="h-7 w-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shrink-0">2</span>
-                Les calculs attendus
-              </h4>
-              <pre className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-900 text-sm font-mono whitespace-pre-wrap leading-relaxed">
-                {solution.expected_calculations}
-              </pre>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-purple-700">
-                <span className="h-7 w-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold shrink-0">3</span>
-                Les étapes de résolution
-              </h4>
-              <ol className="space-y-2">
-                {(solution.expected_steps || []).map((step: string, i: number) => (
-                  <li key={i} className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-100 rounded-xl text-purple-900 text-sm">
-                    <span className="h-6 w-6 rounded-full bg-purple-200 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-lg flex items-center gap-2 text-orange-700">
-                <span className="h-7 w-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-sm font-bold shrink-0">4</span>
-                Une phrase-réponse complète modèle
-              </h4>
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-xl text-orange-900 text-sm leading-relaxed italic">
-                "{solution.model_answer || solution.final_answer}"
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-lg flex items-center gap-2">
-                <span className="h-7 w-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-bold shrink-0">5</span>
-                Comparaison avec ta réponse
-              </h4>
-              {answer.trim() ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/30 border border-muted rounded-xl text-sm">
-                    <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2">Ta réponse :</p>
-                    <p className="italic">{answer}</p>
-                  </div>
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm">
-                    <p className="font-bold text-xs uppercase tracking-wider text-green-600 mb-2">Réponse modèle :</p>
-                    <p className="italic text-green-900">{solution.model_answer || solution.final_answer}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 bg-muted/30 border border-muted rounded-xl text-sm text-muted-foreground italic">
-                  Tu n'as pas encore écrit ta réponse. Écris-la d'abord, puis consulte la correction.
-                </div>
-              )}
-
-              {answer.trim() && (
-                <div className={cn('rounded-xl border p-4 space-y-3 mt-3', scoreColor)}>
-                  <p className="font-bold">Rétroaction :</p>
-                  <ul className="text-sm space-y-2">
-                    {feedbacks.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="shrink-0 font-bold">{f.startsWith('✓') ? '✓' : '→'}</span>
-                        <span>{f.replace('✓ ', '')}</span>
-                      </li>
-                    ))}
-                    {score < 100 && (
-                      <li className="flex items-start gap-2 text-muted-foreground mt-2 pt-2 border-t border-current/10">
-                        <span className="shrink-0">💡</span>
-                        <span>Compare ta démarche avec les étapes de résolution attendues ci-dessus. L'important est de comprendre le raisonnement, pas seulement le résultat.</span>
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-2xl text-center text-primary font-semibold text-base">
-              Peu importe ton score, chaque problème que tu pratiques te rend plus fort en mathématiques. Continue comme ça !
-            </div>
+            <div className="space-y-3"><h4 className="font-bold text-lg flex items-center gap-2 text-green-700"><span className="h-7 w-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold shrink-0">1</span>La bonne réponse finale</h4><div className="p-4 bg-green-50 border-2 border-green-200 rounded-xl text-green-900 font-semibold text-lg leading-relaxed">{solution.final_answer}</div></div>
+            <div className="space-y-3"><h4 className="font-bold text-lg flex items-center gap-2 text-blue-700"><span className="h-7 w-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shrink-0">2</span>Les calculs attendus</h4><pre className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-blue-900 text-sm font-mono whitespace-pre-wrap leading-relaxed">{solution.expected_calculations}</pre></div>
+            <div className="space-y-3"><h4 className="font-bold text-lg flex items-center gap-2 text-purple-700"><span className="h-7 w-7 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold shrink-0">3</span>Les étapes de résolution</h4><ol className="space-y-2">{(solution.expected_steps || []).map((step: string, i: number) => <li key={i} className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-100 rounded-xl text-purple-900 text-sm"><span className="h-6 w-6 rounded-full bg-purple-200 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>{step}</li>)}</ol></div>
+            <div className="space-y-3"><h4 className="font-bold text-lg flex items-center gap-2 text-orange-700"><span className="h-7 w-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-sm font-bold shrink-0">4</span>Une phrase-réponse complète modèle</h4><div className="p-4 bg-orange-50 border border-orange-200 rounded-xl text-orange-900 text-sm leading-relaxed italic">"{solution.model_answer || solution.final_answer}"</div></div>
+            <div className="space-y-3"><h4 className="font-bold text-lg flex items-center gap-2"><span className="h-7 w-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm font-bold shrink-0">5</span>Comparaison avec ta réponse</h4>{answer.trim() ? <div className="grid md:grid-cols-2 gap-4"><div className="p-4 bg-muted/30 border border-muted rounded-xl text-sm"><p className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2">Ta réponse :</p><p className="italic">{answer}</p></div><div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm"><p className="font-bold text-xs uppercase tracking-wider text-green-600 mb-2">Réponse modèle :</p><p className="italic text-green-900">{solution.model_answer || solution.final_answer}</p></div></div> : <div className="p-4 bg-muted/30 border border-muted rounded-xl text-sm text-muted-foreground italic">Tu n'as pas encore écrit ta réponse. Écris-la d'abord, puis consulte la correction.</div>}{answer.trim() && <div className={cn('rounded-xl border p-4 space-y-3 mt-3', scoreColor)}><p className="font-bold">Rétroaction :</p><ul className="text-sm space-y-2">{feedbacks.map((f, i) => <li key={i} className="flex items-start gap-2"><span className="shrink-0 font-bold">{f.startsWith('✓') ? '✓' : '→'}</span><span>{f.replace('✓ ', '')}</span></li>)}{score < 100 && <li className="flex items-start gap-2 text-muted-foreground mt-2 pt-2 border-t border-current/10"><span className="shrink-0">💡</span><span>Compare ta démarche avec les étapes de résolution attendues ci-dessus. L'important est de comprendre le raisonnement, pas seulement le résultat.</span></li>}</ul></div>}</div>
+            <div className="p-5 bg-primary/5 border-2 border-primary/20 rounded-2xl text-center text-primary font-semibold text-base">Peu importe ton score, chaque problème que tu pratiques te rend plus fort en mathématiques. Continue comme ça !</div>
           </div>
         )}
       </div>
