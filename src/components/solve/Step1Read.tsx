@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Checkbox } from '@/lib/ui';
 import { cn } from '@/lib/utils';
+import { CognitiveSupportBar } from './CognitiveSupportBar';
 
 interface Step1ReadProps {
   problem: any;
@@ -19,7 +20,6 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-5 items-start">
-      {/* ── Colonne gauche fixe : Aide-mémoire de lecture ── */}
       <aside className="w-full lg:sticky lg:top-28 lg:self-start rounded-xl border border-blue-300 bg-blue-50 p-3 shadow-sm z-[1]">
         <p className="text-[11px] font-bold uppercase tracking-widest text-blue-800 flex items-center gap-2 mb-2">
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -33,26 +33,38 @@ export function Step1Read({ problem, onUpdate, savedData }: Step1ReadProps) {
             <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-xs">1</span>
             <p className="leading-snug">Lis l’histoire.</p>
           </li>
-
           <li className="grid grid-cols-[1.6rem_1fr] gap-2 items-start">
             <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-xs">2</span>
-            <p className="leading-snug">Cherche les nombres et les mots importants.</p>
-          </li>
-
-          <li className="grid grid-cols-[1.6rem_1fr] gap-2 items-start">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-blue-400 bg-white text-blue-700 font-bold text-xs">3</span>
-            <p className="leading-snug">Relis la question.</p>
+            <p className="leading-snug">Relis pour trouver la question.</p>
           </li>
         </ol>
       </aside>
 
-      {/* ── Zone principale : rappel compact + cases à cocher + message ── */}
-      <div className="min-w-0 space-y-3">
+      <div className="min-w-0 space-y-4">
+        <CognitiveSupportBar
+          items={[
+            {
+              id: 'attention',
+              label: 'Préparer mon attention',
+              icon: 'attention',
+              tone: 'blue',
+              title: 'Je prépare mon attention',
+              text: 'Je regarde seulement le problème. Je lis une fois pour comprendre l’histoire, puis je relis pour trouver ce qu’on demande.',
+            },
+            {
+              id: 'challenge',
+              label: 'Petit défi',
+              icon: 'challenge',
+              tone: 'violet',
+              title: 'Un petit défi à la fois',
+              text: 'Je ne cherche pas encore à calculer. Mon défi ici est seulement de comprendre la situation.',
+            },
+          ]}
+        />
+
         <div className="inline-flex w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2 text-sm font-medium text-blue-900">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">!</span>
-          <p className="leading-snug">
-            Lis une fois pour comprendre. Relis pour trouver la question.
-          </p>
+          <p className="leading-snug">Lis une fois pour comprendre. Relis pour trouver la question.</p>
         </div>
 
         <div className="space-y-2 pt-1 border-t border-dashed">
