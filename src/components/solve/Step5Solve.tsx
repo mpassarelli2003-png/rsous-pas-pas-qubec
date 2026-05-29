@@ -408,121 +408,128 @@ export function Step5Solve({ problem, onUpdate, savedData, planData, step3Data, 
         <Card className="p-4 border-2 border-primary/20 shadow-lg bg-white space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-bold text-primary uppercase tracking-tight">Tableau de calculs</p>
-              <p className="text-xs text-muted-foreground">Horizontal, posé / vertical, explication ou stylet.</p>
+              <p className="text-sm font-bold text-primary uppercase tracking-tight">Tableau de calculs et stylet</p>
+              <p className="text-xs text-muted-foreground">Écris tes calculs au clavier ou avec le stylet dans le même espace de travail.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 text-muted-foreground self-start sm:self-auto">
-              <RotateCcw className="h-3 w-3 mr-1" /> Effacer
+              <RotateCcw className="h-3 w-3 mr-1" /> Effacer les calculs écrits
             </Button>
           </div>
 
-          <div className="space-y-4">
-            {calculationLines.map((line, index) => {
-              const matchingPlan = planRows[index]?.action;
-              const textareaClass = line.mode === 'vertical'
-                ? 'min-h-[180px] font-mono text-lg leading-8 bg-[linear-gradient(to_bottom,transparent_31px,#e2e8f0_32px)] bg-[length:100%_32px]'
-                : line.mode === 'explanation'
-                ? 'min-h-[110px] text-lg leading-relaxed'
-                : 'min-h-[92px] font-mono text-xl leading-relaxed';
-              const placeholder = line.mode === 'vertical'
-                ? 'Pose ton calcul ici.\n  245\n+ 138\n-----'
-                : line.mode === 'explanation'
-                ? 'Ex. : Je dois additionner les quantités pour trouver le total.'
-                : 'Ex. : 245 + 138 = 383';
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+            <div className="min-w-0 space-y-4">
+              <div className="space-y-4">
+                {calculationLines.map((line, index) => {
+                  const matchingPlan = planRows[index]?.action;
+                  const textareaClass = line.mode === 'vertical'
+                    ? 'min-h-[180px] font-mono text-lg leading-8 bg-[linear-gradient(to_bottom,transparent_31px,#e2e8f0_32px)] bg-[length:100%_32px]'
+                    : line.mode === 'explanation'
+                    ? 'min-h-[110px] text-lg leading-relaxed'
+                    : 'min-h-[92px] font-mono text-xl leading-relaxed';
+                  const placeholder = line.mode === 'vertical'
+                    ? 'Pose ton calcul ici.\n  245\n+ 138\n-----'
+                    : line.mode === 'explanation'
+                    ? 'Ex. : Je dois additionner les quantités pour trouver le total.'
+                    : 'Ex. : 245 + 138 = 383';
 
-              return (
-                <div key={line.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-3">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="font-bold text-slate-900">Étape {index + 1} — selon mon plan</p>
-                      {matchingPlan && <p className="text-sm text-slate-600 leading-snug">{matchingPlan}</p>}
-                    </div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                      Mode :
-                      <select
-                        value={line.mode}
+                  return (
+                    <div key={line.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-3">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <p className="font-bold text-slate-900">Étape {index + 1} — selon mon plan</p>
+                          {matchingPlan && <p className="text-sm text-slate-600 leading-snug">{matchingPlan}</p>}
+                        </div>
+                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          Mode :
+                          <select
+                            value={line.mode}
+                            onFocus={() => setActiveLineId(line.id)}
+                            onChange={e => updateLine(line.id, { mode: e.target.value as CalculationMode })}
+                            className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Posé / vertical</option>
+                            <option value="explanation">Explication seulement</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <Textarea
+                        placeholder={placeholder}
+                        className={`${textareaClass} resize-y border-slate-200 bg-white p-4 focus-visible:ring-primary/30`}
+                        value={line.content}
                         onFocus={() => setActiveLineId(line.id)}
-                        onChange={e => updateLine(line.id, { mode: e.target.value as CalculationMode })}
-                        className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      >
-                        <option value="horizontal">Horizontal</option>
-                        <option value="vertical">Posé / vertical</option>
-                        <option value="explanation">Explication seulement</option>
-                      </select>
-                    </label>
-                  </div>
+                        onChange={e => updateLine(line.id, { content: e.target.value })}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
 
-                  <Textarea
-                    placeholder={placeholder}
-                    className={`${textareaClass} resize-y border-slate-200 bg-white p-4 focus-visible:ring-primary/30`}
-                    value={line.content}
-                    onFocus={() => setActiveLineId(line.id)}
-                    onChange={e => updateLine(line.id, { content: e.target.value })}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addLine}
-            className="w-full gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary"
-          >
-            <Plus className="h-4 w-4" /> Ajouter une ligne de calcul
-          </Button>
-
-          <div className="rounded-xl border-2 border-slate-200 bg-slate-50/70 p-3 space-y-3">
-            <div>
-              <p className="text-sm font-bold text-slate-900">Stylet de calcul</p>
-              <p className="text-xs text-slate-600">Utilise cet espace pour poser une opération, faire une retenue, barrer, dessiner une droite ou écrire avec le stylet.</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addLine}
+                className="w-full gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary"
+              >
+                <Plus className="h-4 w-4" /> Ajouter une ligne de calcul
+              </Button>
             </div>
-            <DrawingPad
-              initialDataUrl={calculationDrawing}
-              initialHeight={calculationDrawingHeight}
-              initialObjects={calculationDrawingObjects}
-              onSave={handleCalculationDrawingSave}
-            />
-          </div>
-        </Card>
 
-        <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-widest text-green-700 flex items-center gap-1.5">
-            <span>🔢</span> Nombres utiles de l’étape 3
-          </p>
-          {step3Numbers.length > 0 ? (
+            <div className="rounded-xl border-2 border-slate-200 bg-slate-50/70 p-3 space-y-3 xl:sticky xl:top-28">
+              <div>
+                <p className="text-sm font-bold text-slate-900">Stylet de calcul</p>
+                <p className="text-xs text-slate-600">Même espace de travail : pose une opération, fais une retenue, barre, dessine une droite ou écris avec le stylet.</p>
+              </div>
+              <DrawingPad
+                initialDataUrl={calculationDrawing}
+                initialHeight={calculationDrawingHeight}
+                initialObjects={calculationDrawingObjects}
+                onSave={handleCalculationDrawingSave}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-green-200 bg-green-50/70 p-3 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-700 flex items-center gap-1.5">
+              <span>🔢</span> Nombres utiles de l’étape 3
+            </p>
+            {step3Numbers.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {step3Numbers.map(num => (
+                  <Button
+                    key={num}
+                    variant="outline"
+                    onClick={() => addSymbol(num)}
+                    className="h-10 px-3 text-base font-mono font-bold border-2 border-green-300 text-green-800 bg-white hover:bg-green-100 hover:border-green-500 transition-all active:scale-95"
+                  >
+                    {num}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                Aucun nombre repéré à l'étape 3. Tu peux écrire ton calcul directement.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-700">Symboles utiles</p>
             <div className="flex flex-wrap gap-2">
-              {step3Numbers.map(num => (
+              {MATH_SYMBOLS.map(symbol => (
                 <Button
-                  key={num}
+                  key={symbol}
                   variant="outline"
-                  onClick={() => addSymbol(num)}
-                  className="h-10 px-3 text-base font-mono font-bold border-2 border-green-300 text-green-800 bg-green-50 hover:bg-green-100 hover:border-green-500 transition-all active:scale-95"
+                  onClick={() => addSymbol(symbol)}
+                  className="h-12 w-12 text-lg font-bold border-2 bg-white hover:bg-primary/5 hover:text-primary transition-all active:scale-95"
                 >
-                  {num}
+                  {symbol}
                 </Button>
               ))}
             </div>
-          ) : (
-            <p className="text-xs text-muted-foreground italic">
-              Aucun nombre repéré à l'étape 3. Tu peux écrire ton calcul directement.
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {MATH_SYMBOLS.map(symbol => (
-            <Button
-              key={symbol}
-              variant="outline"
-              onClick={() => addSymbol(symbol)}
-              className="h-12 w-12 text-lg font-bold border-2 hover:bg-primary/5 hover:text-primary transition-all active:scale-95"
-            >
-              {symbol}
-            </Button>
-          ))}
-        </div>
+          </div>
+        </Card>
 
         <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-sm italic text-green-800">
           Chaque calcul doit correspondre à une étape de ton plan. Ajoute toujours l’unité ($, m, kg, °C...) après ton résultat.
