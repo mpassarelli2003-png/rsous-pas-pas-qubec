@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Textarea, Badge } from '@/lib/ui';
 import { Search, Highlighter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CognitiveSupportBar } from './CognitiveSupportBar';
 
 interface Step2QuestionProps {
   problem: any;
@@ -48,15 +49,7 @@ function normalizeText(value: unknown) {
 }
 
 function isProbabilityProblem(problem: any) {
-  const fieldsToCheck = [
-    problem?.mathDomain,
-    problem?.mainConcept,
-    problem?.subConcept,
-    problem?.theme,
-    problem?.title,
-    problem?.question,
-  ];
-
+  const fieldsToCheck = [problem?.mathDomain, problem?.mainConcept, problem?.subConcept, problem?.theme, problem?.title, problem?.question];
   return fieldsToCheck.some(field => normalizeText(field).includes('probabil'));
 }
 
@@ -78,18 +71,12 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
             <Search className="h-4 w-4 shrink-0" />
             Aide-mémoire
           </p>
-
-          <p className="text-sm font-bold text-blue-950 leading-snug mb-2">
-            Débuts de phrases
-          </p>
-
+          <p className="text-sm font-bold text-blue-950 leading-snug mb-2">Débuts de phrases</p>
           <ul className="space-y-2 text-sm text-blue-950">
             <li className="leading-snug">• Je cherche combien...</li>
             <li className="leading-snug">• Je cherche le nombre de...</li>
             <li className="leading-snug">• Je cherche le total de...</li>
-            {showProbabilityStarter && (
-              <li className="leading-snug">• Je cherche ce qui est le plus probable entre...</li>
-            )}
+            {showProbabilityStarter && <li className="leading-snug">• Je cherche ce qui est le plus probable entre...</li>}
           </ul>
         </div>
 
@@ -98,49 +85,37 @@ export function Step2Question({ problem, onUpdate, savedData, highlightedTokenId
             <Highlighter className="h-4 w-4 shrink-0" />
             Infos surlignées
           </p>
-
           {highlightedContentTokens.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {highlightedContentTokens.map((token, index) => (
-                <span key={`${token}-${index}`} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950">
-                  {token}
-                </span>
+                <span key={`${token}-${index}`} className="rounded-md bg-yellow-200 px-2 py-1 text-sm font-semibold text-yellow-950">{token}</span>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-yellow-900 leading-snug">
-              Les nombres et infos surlignés dans l'énoncé apparaîtront ici.
-            </p>
+            <p className="text-sm text-yellow-900 leading-snug">Les nombres et infos surlignés dans l'énoncé apparaîtront ici.</p>
           )}
         </div>
       </aside>
 
-      <div className="min-w-0">
+      <div className="min-w-0 space-y-4">
+        <CognitiveSupportBar
+          items={[
+            { id: 'recall-question', label: 'Rappel actif', icon: 'recall', tone: 'green', title: 'Je me rappelle avant l’aide', text: 'Avant de regarder les exemples, essaie de dire dans tes mots ce que tu dois trouver. Tu ne fais pas encore de calcul.' },
+            { id: 'target-question', label: 'Ce que je cherche', icon: 'target', tone: 'violet', title: 'Une seule cible', text: 'Écris seulement la cible du problème : ce qu’on cherche. Les données et les opérations viendront après.' },
+          ]}
+        />
+
         <div className="rounded-xl border-2 border-primary/20 bg-white px-4 py-3 shadow-sm">
           <div className="space-y-2">
             <div className="space-y-0.5 text-center">
               <h3 className="text-xl md:text-2xl font-bold text-primary">Qu'est-ce qu'on cherche ?</h3>
               <p className="text-sm text-muted-foreground">Écris ce que la question te demande de trouver.</p>
             </div>
-
-            <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Ta réponse :</label>
-            <Textarea
-              placeholder="Exemple : Je cherche le nombre de caisses..."
-              className="min-h-[64px] text-base md:text-lg resize-none border-2 focus:border-primary"
-              value={answer}
-              onChange={(e) => handleAnswerChange(e.target.value)}
-            />
+            <label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Je dois trouver :</label>
+            <Textarea placeholder="Exemple : Je cherche le nombre de caisses..." className="min-h-[64px] text-base md:text-lg resize-none border-2 focus:border-primary" value={answer} onChange={(e) => handleAnswerChange(e.target.value)} />
             <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-              <p className="text-xs text-muted-foreground italic">
-                Tu dis ce qu'on cherche, pas encore le calcul.
-              </p>
-              <Badge
-                variant="outline"
-                className={cn(
-                  'w-fit',
-                  answer.length > 5 ? 'bg-green-50 text-green-800 border-green-200' : 'bg-primary/5'
-                )}
-              >
+              <p className="text-xs text-muted-foreground italic">Tu dis ce qu'on cherche, pas encore le calcul.</p>
+              <Badge variant="outline" className={cn('w-fit', answer.length > 5 ? 'bg-green-50 text-green-800 border-green-200' : 'bg-primary/5')}>
                 {answer.length > 5 ? 'Bonne voie' : 'Continue d’écrire...'}
               </Badge>
             </div>
