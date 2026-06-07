@@ -17,6 +17,12 @@ export interface AdminProblem {
   status: 'brouillon' | 'publie';
   content: string;
   question: string;
+  /** Image optionnelle pour soutenir la compréhension de l'énoncé */
+  imageUrl?: string;
+  /** Description courte de l'image pour l'accessibilité */
+  imageAlt?: string;
+  /** Légende optionnelle affichée sous l'image */
+  imageCaption?: string;
   solution_data: {
     steps_count: number;
     /** Données importantes — une entrée par ligne */
