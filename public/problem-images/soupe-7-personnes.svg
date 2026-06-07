@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<rect width="900" height="520" fill="#fffef7"/>
+<text x="32" y="42" font-family="Arial" font-size="28" font-weight="700" fill="#7c2d12">Une soupe pour 7 personnes</text>
+<g font-family="Arial" font-size="20" fill="#1f2937">
+<rect x="35" y="80" width="390" height="190" rx="14" fill="#fff7ed" stroke="#fdba74"/>
+<text x="55" y="120" font-weight="700">Ingrédients possibles</text>
+<text x="55" y="158">Carottes : 0,84 $ chacune</text><text x="55" y="193">Poireaux : 1,58 $ chacun</text><text x="55" y="228">Pommes de terre : 0,67 $ chacune</text>
+<rect x="475" y="80" width="390" height="190" rx="14" fill="#f0fdf4" stroke="#86efac"/>
+<text x="495" y="120" font-weight="700">Autres ingrédients</text>
+<text x="495" y="158">Céleri : 2,17 $</text><text x="495" y="193">Oignon : 0,72 $</text><text x="495" y="228">Bouillon : 1,64 $ la boîte</text>
+<rect x="125" y="330" width="650" height="110" rx="16" fill="#eff6ff" stroke="#93c5fd"/>
+<text x="155" y="375" font-weight="700">Choisis les quantités nécessaires pour préparer une soupe</text>
+<text x="155" y="410">pour 7 personnes, puis calcule le coût total.</text>
+</g>
+</svg>
