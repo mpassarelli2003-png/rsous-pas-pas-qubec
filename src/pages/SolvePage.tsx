@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Page, PageBody, PageHeader, PageTitle, Button, Progress } from '@/lib/ui';
 import { useParams, Link, useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, CheckCircle2, Home, Lightbulb } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Home, Lightbulb, RotateCcw, Save } from 'lucide-react';
 import problemsData from '../data/problems.json';
 import pfeq5Batch1Rest from '../data/pfeq5-batch1-rest.json';
 import pfeq5Batch2 from '../data/pfeq5-batch2.json';
@@ -28,18 +28,51 @@ const STEPS = [
   { id: 6, title: 'Ma réponse' },
 ];
 
+const getDraftKey = (problemId: string) => `resous_draft_${problemId}`;
+
+function loadDraft(problemId: string) {
+  try {
+    const raw = localStorage.getItem(getDraftKey(problemId));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function SolvePage() {
   const { problemId } = useParams({ from: '/solve/$problemId' });
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [answers, setAnswers] = useState<any>({});
-  const [highlightedTokenIds, setHighlightedTokenIds] = useState<string[]>([]);
-  const [strikethroughTokenIds, setStrikethroughTokenIds] = useState<string[]>([]);
-  const [markMode, setMarkMode] = useState<'highlight' | 'strike'>('highlight');
+  const draft = useMemo(() => loadDraft(problemId), [problemId]);
+  const [currentStep, setCurrentStep] = useState(() => draft?.currentStep || 1);
+  const [answers, setAnswers] = useState<any>(() => draft?.answers || {});
+  const [highlightedTokenIds, setHighlightedTokenIds] = useState<string[]>(() => draft?.highlightedTokenIds || []);
+  const [strikethroughTokenIds, setStrikethroughTokenIds] = useState<string[]>(() => draft?.strikethroughTokenIds || []);
+  const [markMode, setMarkMode] = useState<'highlight' | 'strike'>(() => draft?.markMode || 'highlight');
 
   const [hintOpen, setHintOpen] = useState(false);
-  const [hintLevel, setHintLevel] = useState(1);
-  const [hintsUsedCount, setHintsUsedCount] = useState(0);
+  const [hintLevel, setHintLevel] = useState(() => draft?.hintLevel || 1);
+  const [hintsUsedCount, setHintsUsedCount] = useState(() => draft?.hintsUsedCount || 0);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(() => draft?.savedAt || null);
+
+  useEffect(() => {
+    const payload = {
+      currentStep,
+      answers,
+      highlightedTokenIds,
+      strikethroughTokenIds,
+      markMode,
+      hintLevel,
+      hintsUsedCount,
+      savedAt: new Date().toISOString(),
+    };
+
+    try {
+      localStorage.setItem(getDraftKey(problemId), JSON.stringify(payload));
+      setLastSavedAt(payload.savedAt);
+    } catch {
+      // Si le stockage local est plein ou indisponible, l'app continue de fonctionner.
+    }
+  }, [problemId, currentStep, answers, highlightedTokenIds, strikethroughTokenIds, markMode, hintLevel, hintsUsedCount]);
 
   const allProblems = useMemo(() => {
     const custom = loadCustomProblems()
@@ -116,6 +149,23 @@ export function SolvePage() {
     );
   };
 
+  const handleResetDraft = () => {
+    const ok = window.confirm('Effacer toute la démarche de ce problème et recommencer à zéro ?');
+    if (!ok) return;
+
+    localStorage.removeItem(getDraftKey(problemId));
+    setCurrentStep(1);
+    setAnswers({});
+    setHighlightedTokenIds([]);
+    setStrikethroughTokenIds([]);
+    setMarkMode('highlight');
+    setHintOpen(false);
+    setHintLevel(1);
+    setHintsUsedCount(0);
+    setLastSavedAt(null);
+    window.scrollTo(0, 0);
+  };
+
   const handleFinish = () => {
     const studentAnswer = answers[6]?.answer || '';
     const correctAnswer = problem?.solution_data.final_answer || '';
@@ -156,6 +206,7 @@ export function SolvePage() {
       needsPractice,
     });
 
+    localStorage.removeItem(getDraftKey(problemId));
     navigate({ to: '/progress' });
   };
 
@@ -182,17 +233,23 @@ export function SolvePage() {
   const problemHints = problem.hints ?? undefined;
   const bodyWidthClass = 'max-w-6xl';
   const showHeaderHint = currentStep >= 5;
+  const savedLabel = lastSavedAt
+    ? `Sauvegardé automatiquement ${new Date(lastSavedAt).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}`
+    : 'Sauvegarde automatique active';
 
   return (
     <Page>
       <PageHeader className="border-b bg-background/95 sticky top-0 z-10 backdrop-blur">
         <div className="flex flex-col gap-4 w-full">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
               <Button variant="ghost" size="icon" asChild>
                 <Link to="/select"><Home className="h-5 w-5" /></Link>
               </Button>
               <PageTitle className="text-lg md:text-xl truncate max-w-[200px] md:max-w-md">{problem.title}</PageTitle>
+              <span className="hidden lg:inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 border border-green-200">
+                <Save className="h-3 w-3" /> {savedLabel}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               {showHeaderHint && (
@@ -202,10 +259,17 @@ export function SolvePage() {
                   <span className="sm:hidden">Indice</span>
                 </Button>
               )}
+              <Button variant="outline" size="sm" onClick={handleResetDraft} className="gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
+                <RotateCcw className="h-4 w-4" />
+                <span className="hidden sm:inline">Recommencer</span>
+              </Button>
               <div className="text-sm font-medium text-muted-foreground bg-secondary px-3 py-1 rounded-full whitespace-nowrap">Étape {currentStep} sur 6</div>
             </div>
           </div>
           <Progress value={progress} className="h-2" />
+          <div className="lg:hidden flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 border border-green-200 w-fit">
+            <Save className="h-3 w-3" /> {savedLabel}
+          </div>
         </div>
       </PageHeader>
 
